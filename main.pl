@@ -18,7 +18,7 @@ my ($build_only, $pre_cmd) = &argument_parsing;
 foreach my $bench_name (@task_queue)
 {
     bench_compile($bench_name);
-    bench_run($bench_name) if(!$build_only);
+    bench_run($bench_name, $pre_cmd) if(!$build_only);
 }
 
 ####################################################################################################
@@ -128,10 +128,10 @@ sub bench_compile
 
 sub bench_run
 {
-    my ($bench_name) = @_;
+    my ($bench_name, $pre_cmd) = @_;
     my $source_dir = "$THIS_DIR/$bench_name";
     my $target_dir = "$WORKING_TEMP_DIR/$bench_name";
     
     chdir "$source_dir";
-    system "make run source_dir=$source_dir target_dir=$target_dir";
+    system "$pre_cmd make run source_dir=$source_dir target_dir=$target_dir";
 }
