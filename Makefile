@@ -1,5 +1,5 @@
 compiler 	= gcc
-flags  		= -O3 -lstdc++
+flags  		= -O3 -g -lstdc++
 
 source_dir  = empty
 target_dir 	= empty

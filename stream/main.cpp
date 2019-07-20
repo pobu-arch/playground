@@ -38,15 +38,14 @@ int main()
     printf("madvise ok\n");
 
     int num_entries = MEM_SIZE / sizeof(double);
-    int num_iterations = 100;
-    double sum;
+    int num_iterations = 1000;
     while (num_iterations--)
     {
         // streaming
         for (int i = 0; i < num_entries; i+=8)
         {
     	    volatile double *ptr = (volatile double *)((double *)addr + i);
-    	    sum += *ptr;
+    	    *ptr;
         }
 
         // rand
