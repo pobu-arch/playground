@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use v5.26;
+use v5.10;
 use strict;
 use warnings;
 use File::Find;
@@ -10,40 +10,15 @@ use threads;
 (our $THIS_DIR = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
 our $WORKING_TEMP_DIR = "$THIS_DIR/results";
 our %bench_info;
+our @task_queue;
 
 &bench_init();
-my ($test_name, $need_clean, $build_only, $pre_cmd) = &argument_parser;
+my ($build_only, $pre_cmd) = &argument_parsing;
 
-if($need_clean)
+foreach my $bench_name (@task_queue)
 {
-    say "[info] cleaning SPECCPU dir and $WORKING_TEMP_DIR ...";
-    `rm -irf $WORKING_TEMP_DIR/*`;
-
-    if(exists $ENV{'SPECCPU_2006_ROOT'})
-    {
-        system "rm -irf ".$ENV{'SPECCPU_2006_ROOT'}."/benchspec/C*/*/run";
-        system "rm -irf ".$ENV{'SPECCPU_2006_ROOT'}."/benchspec/C*/*/exe";
-        system "rm -irf ".$ENV{'SPECCPU_2006_ROOT'}."/benchspec/C*/*/build";
-        system "rm -irf ".$ENV{'SPECCPU_2006_ROOT'}."/result/*";
-    }
-
-    if(exists $ENV{'SPECCPU_2017_ROOT'})
-    {
-        system "rm -irf ".$ENV{'SPECCPU_2017_ROOT'}."/benchspec/C*/*/run";
-        system "rm -irf ".$ENV{'SPECCPU_2017_ROOT'}."/benchspec/C*/*/exe";
-        system "rm -irf ".$ENV{'SPECCPU_2017_ROOT'}."/benchspec/C*/*/build";
-        system "rm -irf ".$ENV{'SPECCPU_2017_ROOT'}."/result/*";
-    }
-
-    if(!exists $ENV{'SPECCPU_2006_ROOT'} && !exists $ENV{'SPECCPU_2017_ROOT'})
-    {
-        die "[error] please specify the root dir in \$SPECCPU_2006_ROOT or \$SPECCPU_2017_ROOT";
-    }
-}
-
-if (!-e $WORKING_TEMP_DIR)
-{
-    mkdir $WORKING_TEMP_DIR if scalar @task_quque != 0;
+    bench_compile($bench_name);
+    bench_run($bench_name) if(!$build_only);
 }
 
 ####################################################################################################
@@ -68,4 +43,95 @@ sub get_script_path
 {
     (my $final_path = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
     return $final_path;
+}
+
+sub argument_parsing
+{
+    my $bench_name = '';
+    my $need_clean = 0;
+
+    say '[info] parsing arguments ...';
+
+    if(@ARGV < 1)
+    {
+        die '[error] no enough parameters for this script';
+    }
+
+    foreach my $current_arg (@ARGV)
+    {
+        # supported benchmarks?
+        foreach my $bench_supported (sort keys %bench_info)
+        {
+            if($bench_supported =~ $current_arg)
+            {
+                $bench_name = $bench_supported;
+                push @task_queue, $bench_name;
+                last;
+            }
+        }
+
+        if($bench_name eq '')
+        {
+            if($current_arg =~ /-clean/)
+            {
+                $need_clean = 1;
+            }
+            elsif($current_arg =~ /-build_only/)
+            {
+                $build_only = 1;
+            }
+            else
+            {
+                die "[error] unknown parameters $current_arg";
+            }
+        }
+    }
+
+    die "[error] please specify the benchmark(s)" if $bench_name eq '';
+    say "[info] the selected benchmark is $bench_name" if $bench_name ne '';
+    say '[warning] the build_only option is ON' if $build_only;
+
+    #read pre cmd input from stdin, auto timeout
+    my $timeout = 1;
+
+    eval
+    {
+        local $SIG{ALRM} = sub{die 'alarm'};
+        alarm $timeout;
+
+        $pre_cmd=<STDIN>;
+        chomp $pre_cmd if $pre_cmd ne '';
+        say "[info] the preceding command is \"$pre_cmd\"";
+
+        alarm 0;
+    };
+    say '[warning] stdin timeout' if $@ eq 'alarm';
+
+    say "[info] cleaning results dir $WORKING_TEMP_DIR ...";
+    `rm -irf $WORKING_TEMP_DIR/*`;
+
+    return ($build_only, $pre_cmd);
+}
+
+sub bench_compile
+{
+    my ($bench_name) = @_;
+    my $source_dir = "$THIS_DIR/$bench_name";
+    my $target_dir = "$WORKING_TEMP_DIR/$bench_name";
+
+    mkdir $target_dir if !-e $target_dir;
+    die "[error] unable to create $target_dir" if !-e $target_dir;
+    
+    chdir "$source_dir";
+    system "make bin source_dir=$source_dir target_dir=$target_dir";
+}
+
+sub bench_run
+{
+    my ($bench_name) = @_;
+    my $source_dir = "$THIS_DIR/$bench_name";
+    my $target_dir = "$WORKING_TEMP_DIR/$bench_name";
+    
+    chdir "$source_dir";
+    system "make run source_dir=$source_dir target_dir=$target_dir";
 }

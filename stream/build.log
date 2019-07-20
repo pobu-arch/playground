@@ -1,7 +1,0 @@
-gcc main.cpp -O3 -lstdc++ -o /Users/pobu/Codes/benchmarks/PobuBench/zain/bin
-
-
-main.cpp:40:6: warning: expression result unused; assign into a variable to force a volatile load [-Wunused-volatile-lvalue]
-        *ptr;
-        ^~~~
-1 warning generated.
