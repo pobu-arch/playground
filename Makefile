@@ -1,15 +1,19 @@
-compiler 	= gcc
-flags  		= -O3 -g -lstdc++
+compiler 	= empty
+flags  		= empty
 
 source_dir  = empty
 target_dir 	= empty
 
+ifeq ($(cc),empty)
+	$(error "compiler error")
+endif
+
 ifeq ($(source_dir),empty)
-	$(error "error")
+	$(error "source_dir error")
 endif
 
 ifeq ($(target_dir),empty)
-	$(error "error")
+	$(error "target_dir error")
 endif
 
 source_file = $(wildcard $(source_dir)/*.cpp) $(wildcard $(source_dir)/*.c)

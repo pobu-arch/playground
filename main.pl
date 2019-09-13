@@ -7,15 +7,18 @@ use File::Copy;
 use Cwd 'abs_path';
 use threads;
 
+our $COMPILER = 'g++';
+our $FLAGS    = '-O0';
+
 (our $THIS_DIR = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
 our $WORKING_TEMP_DIR = "$THIS_DIR/results";
-our %bench_info;
-our @task_queue;
+our %BENCH_INFO;
+our @TASK_QUEUE;
 
 &bench_init();
 my ($build_only, $pre_cmd) = &argument_parsing;
 
-foreach my $bench_name (@task_queue)
+foreach my $bench_name (@TASK_QUEUE)
 {
     bench_compile($bench_name);
     bench_run($bench_name, $pre_cmd) if(!$build_only);
@@ -35,7 +38,7 @@ sub bench_init
     my @bench_names = glob "*/Makefile";
     foreach my $name (@bench_names)
     {
-        $bench_info{$+{dir}} = '' if ($name =~ /(?<dir>.+)\/Makefile/);
+        $BENCH_INFO{$+{dir}} = '' if ($name =~ /(?<dir>.+)\/Makefile/);
     }
 }
 
@@ -60,12 +63,12 @@ sub argument_parsing
     foreach my $current_arg (@ARGV)
     {
         # supported benchmarks?
-        foreach my $bench_supported (sort keys %bench_info)
+        foreach my $bench_supported (sort keys %BENCH_INFO)
         {
             if($bench_supported =~ $current_arg)
             {
                 $bench_name = $bench_supported;
-                push @task_queue, $bench_name;
+                push @TASK_QUEUE, $bench_name;
                 last;
             }
         }
@@ -123,7 +126,7 @@ sub bench_compile
     die "[error] unable to create $target_dir" if !-e $target_dir;
     
     chdir "$source_dir";
-    system "make bin source_dir=$source_dir target_dir=$target_dir";
+    system "make bin source_dir=$source_dir target_dir=$target_dir compiler=$COMPILER flags=$FLAGS";
 }
 
 sub bench_run
