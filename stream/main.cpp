@@ -4,47 +4,56 @@
 #include <errno.h>
 #include <sys/mman.h>
 
-#define MEM_SIZE (1024 * 1024 * 1024LL)
+typedef unsigned long long int uint64;
+
+#define MEM_SIZE ((uint64)1024 * 1024 * 1024)
+#define CACHE_BLOCK_SIZE 64
 
 using namespace std;
 
 int main()
 {
     srand(time(NULL));
-    void *addr;
-    size_t alignment = 1 * 1024 * 1024 * 1024L;
-    size_t size = 1 * 1024 * 1024 * 1024L;
-    int err = posix_memalign(&addr, alignment, size);
+    
+    // make sure mem addr is aligned
+    void *start_addr;
+    uint64 alignment = 1 * 1024 * 1024 * 1024;
+    uint64 size = 1 * 1024 * 1024 * 1024;
+    int err = posix_memalign(&start_addr, alignment, size);
     if (err != 0)
     {
         if (err == EINVAL)
         {
-            printf("posix_memalign EINVAL\n");
+            printf("[error] posix_memalign EINVAL\n");
         }
         else if (err == ENOMEM)
         {
-            printf("posix_memalign ENOMEM\n");
+            printf("[error] posix_memalign ENOMEM\n");
         }
         return 1;
     }
 
-    printf("posix_memalign ok, addr = %p\n", addr);
+    printf("[info] posix_memalign ok, start_addr = %p\n", start_addr);
 
-    // if (madvise(addr, size, MADV_HUGEPAGE) == -1) {
-    //   perror("madvise");
-    //   return 1;
-    // }
+    // enable THP
+    if (madvise(start_addr, size, MADV_HUGEPAGE) == -1)
+    {
+        perror("[error] madvise error for hugepage");
+        return 1;
+    }
 
-    printf("madvise ok\n");
-
-    int num_entries = MEM_SIZE / sizeof(double);
-    int num_iterations = 1000;
+    uint64 num_entries = MEM_SIZE / CACHE_BLOCK_SIZE;
+    uint64 num_iterations = 10000;
+    printf("[into] entering into the main loop with %lld iterations\n", num_iterations);
+    
+    // streaming
     while (num_iterations--)
     {
-        // streaming
-        for (int i = 0; i < num_entries; i+=8)
+        volatile double *ptr;
+        
+        for (int i = 0; i < num_entries; i+=CACHE_BLOCK_SIZE)
         {
-    	    volatile double *ptr = (volatile double *)((double *)addr + i);
+    	    volatile uint64 *ptr = ((volatile uint64*)start_addr + i);
     	    *ptr;
         }
 
@@ -53,7 +62,7 @@ int main()
         // *ptr;
     }
 
-    free(addr);
+    free(start_addr);
 
     return 0;
 }
