@@ -36,14 +36,14 @@ int main()
     printf("[info] posix_memalign ok, start_addr = %p\n", start_addr);
 
     // enable THP
-    if (madvise(start_addr, size, MADV_HUGEPAGE) == -1)
+    /*if (madvise(start_addr, size, MADV_HUGEPAGE) == -1)
     {
         perror("[error] madvise error for hugepage");
         return 1;
-    }
+    }*/
 
     uint64 num_entries = MEM_SIZE / CACHE_BLOCK_SIZE;
-    uint64 num_iterations = 10000;
+    uint64 num_iterations = 1000;
     printf("[into] entering into the main loop with %lld iterations\n", num_iterations);
     
     // streaming
@@ -54,7 +54,7 @@ int main()
         for (int i = 0; i < num_entries; i+=CACHE_BLOCK_SIZE)
         {
     	    volatile uint64 *ptr = ((volatile uint64*)start_addr + i);
-    	    *ptr;
+    	    volatile uint64 temp = *ptr;
         }
 
         // rand

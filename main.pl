@@ -8,7 +8,7 @@ use Cwd 'abs_path';
 use threads;
 
 our $COMPILER = 'g++';
-our $FLAGS    = '-O0';
+our $FLAGS    = '-O3 -g';
 
 (our $THIS_DIR = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
 our $WORKING_TEMP_DIR = "$THIS_DIR/results";
@@ -126,7 +126,7 @@ sub bench_compile
     die "[error] unable to create $target_dir" if !-e $target_dir;
     
     chdir "$source_dir";
-    system "make bin source_dir=$source_dir target_dir=$target_dir compiler=$COMPILER flags=$FLAGS";
+    system "make bin source_dir=$source_dir target_dir=$target_dir compiler=\"$COMPILER\" \"flags=$FLAGS\"";
 }
 
 sub bench_run

@@ -25,5 +25,8 @@ run_log    	= $(target_dir)/run.log
 bin: $(source_file)
 	$(compiler) $(source_file) -o $(target_dir)/bin $(flags) 2>&1 | tee -a $(build_log)
 
+run: $(bin)
+	time $(target_dir)/bin | tee -a $(build_log)
+
 clean:
 	rm -f $(target_dir)/bin
