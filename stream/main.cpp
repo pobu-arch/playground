@@ -43,18 +43,15 @@ int main()
     }*/
 
     uint64 num_entries = MEM_SIZE / CACHE_BLOCK_SIZE;
-    uint64 num_iterations = 1000;
+    uint64 num_iterations = 30000;
     printf("[into] entering into the main loop with %lld iterations\n", num_iterations);
     
     // streaming
     while (num_iterations--)
     {
-        volatile double *ptr;
-        
-        for (int i = 0; i < num_entries; i+=CACHE_BLOCK_SIZE)
+        for (int i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE * 1)
         {
-    	    volatile uint64 *ptr = ((volatile uint64*)start_addr + i);
-    	    volatile uint64 temp = *ptr;
+    	    volatile uint64 temp = *((volatile uint64*)start_addr + i);
         }
 
         // rand
