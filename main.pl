@@ -33,7 +33,7 @@ foreach my $bench_name (@TASK_QUEUE)
 sub bench_init
 {
     mkdir $WORKING_TEMP_DIR if !-e $WORKING_TEMP_DIR;
-    die "[error] unable to create working temp dir at $WORKING_TEMP_DIR" if !-e $WORKING_TEMP_DIR;
+    die "[error-script] unable to create working temp dir at $WORKING_TEMP_DIR" if !-e $WORKING_TEMP_DIR;
 
     my @bench_names = glob "*/Makefile";
     foreach my $name (@bench_names)
@@ -53,11 +53,11 @@ sub argument_parsing
     my $bench_name = '';
     my $need_clean = 0;
 
-    say '[info] parsing arguments ...';
+    say '[info-script] parsing arguments ...';
 
     if(@ARGV < 1)
     {
-        die '[error] no enough parameters for this script';
+        die '[error-script] no enough parameters for this script';
     }
 
     foreach my $current_arg (@ARGV)
@@ -85,14 +85,14 @@ sub argument_parsing
             }
             else
             {
-                die "[error] unknown parameters $current_arg";
+                die "[error-script] unknown parameters $current_arg";
             }
         }
     }
 
-    die "[error] please specify the benchmark(s)" if $bench_name eq '';
-    say "[info] the selected benchmark is $bench_name" if $bench_name ne '';
-    say '[warning] the build_only option is ON' if $build_only;
+    die "[error-script] please specify the benchmark(s)" if $bench_name eq '';
+    say "[info-script] the selected benchmark is $bench_name" if $bench_name ne '';
+    say '[warning-script] the build_only option is ON' if $build_only;
 
     #read pre cmd input from stdin, auto timeout
     my $timeout = 1;
@@ -104,13 +104,13 @@ sub argument_parsing
 
         $pre_cmd=<STDIN>;
         chomp $pre_cmd if $pre_cmd ne '';
-        say "[info] the preceding command is \"$pre_cmd\"";
+        say "[info-script] the preceding command is \"$pre_cmd\"";
 
         alarm 0;
     };
-    say '[warning] stdin timeout' if $@ eq 'alarm';
+    say '[warning-script] stdin timeout' if $@ eq 'alarm';
 
-    say "[info] cleaning results dir $WORKING_TEMP_DIR ...";
+    say "[info-script] cleaning results dir $WORKING_TEMP_DIR ...";
     `rm -irf $WORKING_TEMP_DIR/*`;
 
     return ($build_only, $pre_cmd);
@@ -123,7 +123,7 @@ sub bench_compile
     my $target_dir = "$WORKING_TEMP_DIR/$bench_name";
 
     mkdir $target_dir if !-e $target_dir;
-    die "[error] unable to create $target_dir" if !-e $target_dir;
+    die "[error-script] unable to create $target_dir" if !-e $target_dir;
     
     chdir "$source_dir";
     system "make bin source_dir=$source_dir target_dir=$target_dir compiler=\"$COMPILER\" \"flags=$FLAGS\"";
@@ -136,5 +136,6 @@ sub bench_run
     my $target_dir = "$WORKING_TEMP_DIR/$bench_name";
     
     chdir "$source_dir";
+    say "\n";
     system "$pre_cmd make run source_dir=$source_dir target_dir=$target_dir";
 }

@@ -47,16 +47,18 @@ int main()
     printf("[into] entering into the main loop with %lld iterations\n", num_iterations);
     
     // streaming
+    /*for (int i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE * 1)
+    {
+    	*((volatile uint64*)start_addr + i) = 0xff;
+    }*/
+
     while (num_iterations--)
     {
-        for (int i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE * 1)
+        for (int i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE)
         {
-    	    volatile uint64 temp = *((volatile uint64*)start_addr + i);
+    	    volatile uint64_t temp = *((volatile uint64_t*)start_addr + i);
+            //*((volatile uint8_t*)start_addr + i) = 0;
         }
-
-        // rand
-        // volatile double *ptr = (volatile double *)((double *)addr + rand() % num_entries);
-        // *ptr;
     }
 
     free(start_addr);
