@@ -3,6 +3,7 @@ flags  		= empty
 
 source_dir  = empty
 target_dir 	= empty
+inc_dir     = empty
 
 ifeq ($(cc),empty)
 	$(error "compiler error")
@@ -23,10 +24,11 @@ run_log    	= $(target_dir)/run.log
 #.PHONY: all clean
 
 bin: $(source_file)
-	$(compiler) $(source_file) -o $(target_dir)/bin $(flags) 2>&1 | tee -a $(build_log)
+	$(compiler) $(source_file) -o $(target_dir)/bin $(flags) $(addprefix -I,$(inc_dir)) 2>&1 | tee -a $(build_log)
 
 run: $(bin)
-	time $(target_dir)/bin | tee -a $(build_log)
+	#time $(target_dir)/bin | tee -a $(run_log)
+	$(target_dir)/bin
 
 clean:
 	rm -f $(target_dir)/bin

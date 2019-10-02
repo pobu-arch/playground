@@ -10,8 +10,8 @@ use threads;
 our $COMPILER = 'g++';
 our $FLAGS    = '-O3 -g';
 
-(our $THIS_DIR = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
-our $WORKING_TEMP_DIR = "$THIS_DIR/results";
+our $THIS_DIR = &get_script_path;
+our $WORKING_TEMP_DIR = "$THIS_DIR/../results";
 our %BENCH_INFO;
 our @TASK_QUEUE;
 
@@ -20,8 +20,8 @@ my ($build_only, $pre_cmd) = &argument_parsing;
 
 foreach my $bench_name (@TASK_QUEUE)
 {
-    bench_compile($bench_name);
-    bench_run($bench_name, $pre_cmd) if(!$build_only);
+    my $build_error = &bench_compile($bench_name);
+    &bench_run($bench_name, $pre_cmd) if(!$build_error & !$build_only);
 }
 
 ####################################################################################################
@@ -30,7 +30,7 @@ foreach my $bench_name (@TASK_QUEUE)
 
 ####################################################################################################
 
-sub bench_init
+sub bench_init()
 {
     mkdir $WORKING_TEMP_DIR if !-e $WORKING_TEMP_DIR;
     die "[error-script] unable to create working temp dir at $WORKING_TEMP_DIR" if !-e $WORKING_TEMP_DIR;
@@ -39,16 +39,20 @@ sub bench_init
     foreach my $name (@bench_names)
     {
         $BENCH_INFO{$+{dir}} = '' if ($name =~ /(?<dir>.+)\/Makefile/);
+        say "[info-script] detected $+{dir}";
     }
+
+    say "[info-script] playground dir is at $WORKING_TEMP_DIR";
+    say "[info-script] working temp dir is at $WORKING_TEMP_DIR";
 }
 
-sub get_script_path
+sub get_script_path()
 {
     (my $final_path = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
     return $final_path;
 }
 
-sub argument_parsing
+sub argument_parsing()
 {
     my $bench_name = '';
     my $need_clean = 0;
@@ -116,25 +120,41 @@ sub argument_parsing
     return ($build_only, $pre_cmd);
 }
 
-sub bench_compile
+sub bench_compile()
 {
-    my ($bench_name) = @_;
-    my $source_dir = "$THIS_DIR/$bench_name";
-    my $target_dir = "$WORKING_TEMP_DIR/$bench_name";
+    my ($bench_name)    = @_;
+    my $source_dir      = "$THIS_DIR/$bench_name";
+    my $target_dir      = "$WORKING_TEMP_DIR/$bench_name";
+    my $compile_logfile = "$target_dir/compile.log";
 
     mkdir $target_dir if !-e $target_dir;
     die "[error-script] unable to create $target_dir" if !-e $target_dir;
-    
+
     chdir "$source_dir";
-    system "make bin source_dir=$source_dir target_dir=$target_dir compiler=\"$COMPILER\" \"flags=$FLAGS\"";
+    my $parameters = "source_dir=$source_dir target_dir=$target_dir inc_dir=$THIS_DIR/_inc";
+       $parameters.= " compiler=\"$COMPILER\" \"flags=$FLAGS\"";
+
+    say "\n";
+
+    my $compile_log = `make bin $parameters`;
+    say "$compile_log";
+    if($compile_log =~ 'errors generated.')
+    {
+        die "[error] fail to open $compile_logfile" if !open COMPILE_LOGFILE, ">$compile_logfile";
+        print COMPILE_LOGFILE $compile_log;
+        close COMPILE_LOGFILE;
+        return 1;
+    }
+
+    return 0;
 }
 
-sub bench_run
+sub bench_run()
 {
     my ($bench_name, $pre_cmd) = @_;
     my $source_dir = "$THIS_DIR/$bench_name";
     my $target_dir = "$WORKING_TEMP_DIR/$bench_name";
-    
+
     chdir "$source_dir";
     say "\n";
     system "$pre_cmd make run source_dir=$source_dir target_dir=$target_dir";
