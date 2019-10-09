@@ -11,7 +11,7 @@ our $COMPILER = 'g++';
 our $FLAGS    = '-O3 -g';
 
 our $THIS_DIR = &get_script_path;
-our $WORKING_TEMP_DIR = "$THIS_DIR/../results";
+our $WORKING_TEMP_DIR = "$THIS_DIR/../_results";
 our %BENCH_INFO;
 our @TASK_QUEUE;
 
