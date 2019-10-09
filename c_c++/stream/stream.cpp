@@ -36,8 +36,8 @@ int main()
     {
         for (uint64_t i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE)
         {
-    	    volatile uint64_t temp = *((volatile uint64_t*)start_addr + i);
-            //*((volatile uint64_t*)start_addr + i) = 0;
+    	    //volatile uint64_t temp = *((volatile uint64_t*)start_addr + i);
+            *((volatile uint64_t*)start_addr + i) = 0;
         }
     }
 

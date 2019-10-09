@@ -4,34 +4,31 @@
 #include "pobu.h"
 using namespace std;
 
-#define MEM_SIZE (uint64_t)1024 * 1024 * 1024 * 4
+#define NUM_ELEMENTS (uint64_t) 2147483647
 
-struct element
-{
-    uint64_t* next;
-    uint64_t* pre;
-    double data[6];
-};
+uint32_t* ptr[NUM_ELEMENTS];
 
 int main()
 {
     // make sure mem addr is aligned
-    element* mem = (element*)page_aligned_malloc(MEM_SIZE);
-    //if(mem != NULL) memset(mem, 0, MEM_SIZE);
+    uint32_t** mem = (uint32_t**)page_aligned_malloc(NUM_ELEMENTS * sizeof(unsigned int*));
+    if(mem != NULL) memset(mem, 0, NUM_ELEMENTS);
 
-    uint64_t num_entries = MEM_SIZE / CACHE_BLOCK_SIZE;
     uint64_t num_iterations = 300;
-    
-    
-    printf("[into] linked list element size is %lu bytes\n", sizeof(element));
+
+    //printf("[into] linked list element size is %lu bytes\n", sizeof(element));
     printf("[into] entering into the main loop with %lld iterations\n", num_iterations);
 
     set_timer_start(0);
     while (num_iterations--)
     {
-        for (int i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE)
+        uint64_t remains  = NUM_ELEMENTS;
+        uint64_t pre_index = 1; 
+        while(remains--)
         {
-    	    mem[i].data[0] = i;
+            uint64_t next_index = (pre_index * 16807) % 2147483647;
+    	    ptr[pre_index] = &(ptr[next_index]);
+            pre_index = next_index;
         }
     }
     set_timer_end(0);
