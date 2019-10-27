@@ -12,7 +12,7 @@ our $FLAGS    = '-O3 -g';
 
 our $THIS_DIR         = &get_script_path;
 our $WORKING_TEMP_DIR = "$THIS_DIR/../_results";
-our $VERONICA_DIR     = "$ENV{'VERONICA'}/cpp";
+our $VERONICA_DIR     = "$THIS_DIR/../veronica/cpp";
 our %BENCH_INFO;
 our @TASK_QUEUE;
 
