@@ -10,8 +10,9 @@ use threads;
 our $COMPILER = 'g++';
 our $FLAGS    = '-O3 -g';
 
-our $THIS_DIR = &get_script_path;
+our $THIS_DIR         = &get_script_path;
 our $WORKING_TEMP_DIR = "$THIS_DIR/../_results";
+our $VERONICA_DIR     = "$ENV{'VERONICA'}/cpp";
 our %BENCH_INFO;
 our @TASK_QUEUE;
 
@@ -42,6 +43,8 @@ sub bench_init()
         say "[info-script] detected $+{dir}";
     }
 
+    die "[error] veronica is not imported !" if $VERONICA_DIR eq '/cpp';
+    say "[info-script] veronica dir is at $VERONICA_DIR";
     say "[info-script] playground dir is at $WORKING_TEMP_DIR";
     say "[info-script] working temp dir is at $WORKING_TEMP_DIR";
 }
@@ -131,7 +134,7 @@ sub bench_compile()
     die "[error-script] unable to create $target_dir" if !-e $target_dir;
 
     chdir "$source_dir";
-    my $parameters = "source_dir=$source_dir target_dir=$target_dir inc_dir=$THIS_DIR/_inc";
+    my $parameters = "source_dir=$source_dir target_dir=$target_dir inc_dir=$VERONICA_DIR";
        $parameters.= " compiler=\"$COMPILER\" \"flags=$FLAGS\"";
 
     say "\n";

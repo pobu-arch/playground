@@ -19,9 +19,11 @@ our %SPEC_INFO;
 our %SUPPORTED_BENCHMARKS;
 our %UNSUPPORTED_BENCHMARKS;
 
-(our $THIS_DIR = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
-our $WORKING_TEMP_DIR   = "$THIS_DIR/results";
+our $THIS_DIR = &get_script_path();
+our $WORKING_TEMP_DIR   = "$THIS_DIR/_results";
 require ("$THIS_DIR/info.pl");
+require ("$ENV{'VERONICA'}/common.pl");
+require ("$ENV{'VERONICA'}/threads.pl");
 
 our %THREAD_POOL        = ();
 our @task_quque;
@@ -619,10 +621,4 @@ sub spec_init
     }
 
     say "[warning] task queue is empty, it may indicates unsupported benchmarks are selected" if @task_quque == 0;
-}
-
-sub get_script_path
-{
-    (my $final_path = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
-    return $final_path;
 }

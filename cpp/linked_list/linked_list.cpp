@@ -1,17 +1,17 @@
-#include <iostream>
 #include <cstdio>
 #include <cstdlib>
-#include "pobu.h"
+#include "veronica.h"
 using namespace std;
 
 #define NUM_ELEMENTS (uint64_t) 2147483647
+typedef uint32_t element;
 
-uint32_t* ptr[NUM_ELEMENTS];
+element* ptr[NUM_ELEMENTS];
 
 int main()
 {
     // make sure mem addr is aligned
-    uint32_t** mem = (uint32_t**)page_aligned_malloc(NUM_ELEMENTS * sizeof(unsigned int*));
+    element** mem = (element**)veronica::page_aligned_malloc(NUM_ELEMENTS * sizeof(element*));
     if(mem != NULL) memset(mem, 0, NUM_ELEMENTS);
 
     uint64_t num_iterations = 300;
@@ -19,7 +19,7 @@ int main()
     //printf("[into] linked list element size is %lu bytes\n", sizeof(element));
     printf("[into] entering into the main loop with %lld iterations\n", num_iterations);
 
-    set_timer_start(0);
+    veronica::set_timer_start(0);
     while (num_iterations--)
     {
         uint64_t remains  = NUM_ELEMENTS;
@@ -27,12 +27,12 @@ int main()
         while(remains--)
         {
             uint64_t next_index = (pre_index * 16807) % 2147483647;
-    	    ptr[pre_index] = &(ptr[next_index]);
+    	    ptr[pre_index] = ptr[next_index];
             pre_index = next_index;
         }
     }
-    set_timer_end(0);
-    print_timer(0, "test");
+    veronica::set_timer_end(0);
+    veronica::print_timer(0, "test");
 
     free(mem);
 
