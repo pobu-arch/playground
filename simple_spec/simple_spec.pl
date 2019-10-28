@@ -6,6 +6,11 @@ use warnings;
 use File::Find;
 use File::Copy;
 use Cwd 'abs_path';
+
+use lib $ENV{'VERONICA_PERL'};
+use Veronica::Common;
+use Veronica::Thread;
+
 use threads;
 
 our $C_COMPILER         = 'gcc';
@@ -19,11 +24,9 @@ our %SPEC_INFO;
 our %SUPPORTED_BENCHMARKS;
 our %UNSUPPORTED_BENCHMARKS;
 
-our $THIS_DIR = &get_script_path();
+our $THIS_DIR = Veronica::Common::get_script_path();
 our $WORKING_TEMP_DIR   = "$THIS_DIR/_results";
 require ("$THIS_DIR/info.pl");
-require ("$ENV{'VERONICA'}/common.pl");
-require ("$ENV{'VERONICA'}/threads.pl");
 
 our %THREAD_POOL        = ();
 our @task_quque;
@@ -44,22 +47,22 @@ my ($bench_name, $input_size, $need_clean, $build_only, $pre_cmd) = &argument_pa
 
 foreach my $bench_name (@task_quque)
 {
-    my $current_time       = time();
+    my $current_time        = time();
     #my $working_temp       = "$WORKING_TEMP_DIR/"."${bench_name}_"."$current_time";
-    my $working_temp       = "$WORKING_TEMP_DIR/$bench_name";
-    my $pre_cmd_logfile    = "$working_temp/pre_cmd.log";
-    my $compile_logfile    = "$working_temp/compile.log";
-    my $run_cmd_file       = "$working_temp/run_cmd";
-    my $run_logfile        = "$working_temp/run_output.log";
+    my $working_temp        = "$WORKING_TEMP_DIR/$bench_name";
+    my $precmd_log_file     = "$working_temp/pre_cmd.log";
+    my $compile_log_file    = "$working_temp/compile.log";
+    my $run_cmd_file        = "$working_temp/run_cmd";
+    my $run_log_file        = "$working_temp/run_output.log";
 
-    &spec_compile($working_temp, $bench_name, $need_clean, $compile_logfile);
-    &spec_run_setup($working_temp, $bench_name, $input_size, $pre_cmd, $run_cmd_file, $run_logfile);
+    &spec_compile($working_temp, $bench_name, $need_clean, $compile_log_file);
+    &spec_run_setup($working_temp, $bench_name, $input_size, $pre_cmd, $run_cmd_file, $run_log_file);
     if(!$build_only)
     {
         my $pre_cmd_log = &spec_run($working_temp, $bench_name, $input_size,
-                                    $pre_cmd, $run_cmd_file, $run_logfile);
+                                    $pre_cmd, $run_cmd_file, $run_log_file);
 
-        &post_run_check($pre_cmd_log, $bench_name, $run_logfile, $pre_cmd_logfile);
+        &post_run_check($pre_cmd_log, $bench_name, $run_log_file, $precmd_log_file);
     }
 }
 
@@ -170,7 +173,7 @@ sub argument_parse
     return ($bench_name, $input_size, $need_clean, $build_only, $pre_cmd);
 }
 
-sub clean()
+sub clean
 {
     say "[info] cleaning SPECCPU dir and $WORKING_TEMP_DIR ...";
     `rm -irf $WORKING_TEMP_DIR/*`;
@@ -201,16 +204,13 @@ sub clean()
 
 sub spec_compile
 {
-    my ($working_temp, $bench_name, $need_clean, $compile_logfile) = @_;
-    system "rm $compile_logfile" if -e $compile_logfile;
+    my ($working_temp, $bench_name, $need_clean, $compile_log_file) = @_;
+    system "rm $compile_log_file" if -e $compile_log_file;
 
     say "[info] starting compilation for $bench_name ...";
 
-    mkdir $working_temp if !-e $working_temp;
-    die "[error] unable to create working temp dir at $working_temp" if !-e $working_temp;
-
-    mkdir "$working_temp/obj" if !-e "$working_temp/obj";
-    die "[error] unable to create obj dir at $working_temp/obj" if !-e "$working_temp/obj";
+    Veronica::Common::mkdir_or_die("$working_temp");
+    Veronica::Common::mkdir_or_die("$working_temp/obj");
     system "rm -irf $working_temp/obj/*";
 
     # setup spec root dir
@@ -245,14 +245,13 @@ sub spec_compile
     if(exists $SPEC_INFO{$version}{$bench_name})
     {
         my $filelist_path = "$THIS_DIR/filelist/$SPEC_INFO{$version}{$bench_name}";
-        die "[error] fail to open $filelist_path"
-        if !open FILELIST_HANDLE, "<$filelist_path";
+        my $filelist_handle = Veronica::Common::open_or_die("<$filelist_path");
 
-        while(my $line = <FILELIST_HANDLE>)
+        while(my $line = <$filelist_handle>)
         {
             push @filelist, $SUPPORTED_BENCHMARKS{$bench_name}{'src_dir'}."/src/$line";
         }
-        close FILELIST_HANDLE;
+        close $filelist_handle;
     }
 
     if($bench_name eq '648.exchange2_s')
@@ -384,7 +383,7 @@ sub spec_compile
             }
             else
             {
-                $error = make_at_least_n_thread_slots(1, $compile_logfile);
+                $error = make_at_least_n_thread_slots(1, $compile_log_file);
                 goto BUILD_ERROR if $error;
 
                 &thread_start($filename, $compile_cmd);
@@ -392,7 +391,7 @@ sub spec_compile
         }
         else
         {
-            $error = system "$compile_cmd 2>> $compile_logfile";
+            $error = system "$compile_cmd 2>> $compile_log_file";
         }
 
         $obj_count++;
@@ -400,7 +399,7 @@ sub spec_compile
     }
 
     # empty the thread pool
-    $error = make_at_least_n_thread_slots(scalar threads->list(), $compile_logfile) if($BUILD_CPU_NUM > 1);
+    $error = make_at_least_n_thread_slots(scalar threads->list(), $compile_log_file) if($BUILD_CPU_NUM > 1);
     goto BUILD_ERROR if($error);
 
     # linking
@@ -416,41 +415,43 @@ sub spec_compile
     }
 
     say "$link_cmd\n\n";
-    die '[error] fail to open compile.log' if !open COMPILE_LOGFILE, ">>$compile_logfile";
-    print COMPILE_LOGFILE $link_cmd;
-    print COMPILE_LOGFILE "\n\n";
-    close COMPILE_LOGFILE;
-    select((select(COMPILE_LOGFILE), $| = 1)[0]);
+    
+    my $compile_log_handle = Veronica::Common::open_or_die(">>$compile_log_file");
+    print $compile_log_handle $link_cmd;
+    print $compile_log_handle "\n\n";
+    close $compile_log_handle;
+    # flush write buffer
+    select((select($compile_log_handle), $| = 1)[0]);
 
-    $error = system "$link_cmd 2>> $compile_logfile";
+    $error = system "$link_cmd 2>> $compile_log_file";
 
     BUILD_ERROR:
     if($error)
     {
-        make_at_least_n_thread_slots(scalar threads->list(), $compile_logfile) if($BUILD_CPU_NUM > 1);
+        make_at_least_n_thread_slots(scalar threads->list(), $compile_log_file) if($BUILD_CPU_NUM > 1);
 
         say "\n";
         say "[error] build error detected for $bench_name";
-        die "[error] plz check $compile_logfile";
+        die "[error] plz check $compile_log_file";
     }
 }
 
 sub spec_run_setup
 {
-    my($working_temp, $bench_name, $input_size, $pre_cmd, $run_cmd_file, $run_logfile) = @_;
+    my($working_temp, $bench_name, $input_size, $pre_cmd, $run_cmd_file, $run_log_file) = @_;
     die '[error] you must specify the size of benchmark (ref/test) ?' if $input_size eq '';
 
-    die "[error] fail to open $run_cmd_file" if !open RUN_CMD_HANDLE, ">$run_cmd_file";
-    print RUN_CMD_HANDLE "#!/bin/bash\n";
+    my $run_cmd_handle = Veronica::Common::open_or_die(">$run_cmd_file");
+    print $run_cmd_handle "#!/bin/bash\n";
 
     say "[info] clustering inputing arguments for $bench_name ...";
     foreach my $current_run_args (@{$SUPPORTED_BENCHMARKS{$bench_name}{$input_size}})
     {
         $bench_name ne '445.gobmk' ?
-        print RUN_CMD_HANDLE "$working_temp/$bench_name $current_run_args >> $run_logfile\n" :
-        print RUN_CMD_HANDLE "cat $current_run_args | $working_temp/$bench_name >> $run_logfile\n";
+        print $run_cmd_handle "$working_temp/$bench_name $current_run_args >> $run_log_file\n" :
+        print $run_cmd_handle "cat $current_run_args | $working_temp/$bench_name >> $run_log_file\n";
     }
-    close RUN_CMD_HANDLE;
+    close $run_cmd_handle;
 
     chdir $working_temp;
     system "chmod 777 $run_cmd_file";
@@ -484,15 +485,15 @@ sub spec_run_setup
 
 sub spec_run
 {
-    my($working_temp, $bench_name, $input_size, $pre_cmd, $run_cmd_file, $run_logfile) = @_;
+    my($working_temp, $bench_name, $input_size, $pre_cmd, $run_cmd_file, $run_log_file) = @_;
 
     say "[info] executing command $pre_cmd $run_cmd_file ...";
-    return `$pre_cmd $run_cmd_file 2>&1 $run_logfile`;
+    return `$pre_cmd $run_cmd_file 2>&1 $run_log_file`;
 }
 
 sub post_run_check
 {
-    my($pre_cmd_log, $bench_name, $run_logfile, $pre_cmd_logfile) = @_;
+    my($pre_cmd_log, $bench_name, $run_log_file, $precmd_log_file) = @_;
 
     die "[error] Please use /usr/bin/perf rather than perf\n".
         '[error] perf is uncompatible with perl\'s system call for unknown reason.'
@@ -500,29 +501,28 @@ sub post_run_check
 
     if($pre_cmd_log ne '')
     {
-        die "[error] fail to open $pre_cmd_logfile, it may indicates perf errors"
-        if !open PERF_LOG_HANDLE, ">$pre_cmd_logfile";
+        my $perf_log_handle = Veronica::Common::open_or_die(">$precmd_log_file");
 
-        print PERF_LOG_HANDLE $pre_cmd_log;
-        close PERF_LOG_HANDLE;
+        print $perf_log_handle $pre_cmd_log;
+        close $perf_log_handle;
     }
 
     say "[info] starting post-run check for $bench_name ...";
 
-    die "[error] $run_logfile doesn't exist"
-    if !-e $run_logfile;
+    die "[error] $run_log_file doesn't exist"
+    if !-e $run_log_file;
 
-    die "[error] fail to open $run_logfile, it may indicates perf or run errors"
-    if !open RUN_LOG_HANDLE, "<$run_logfile";
+    my $run_log_handle = Veronica::Common::open_or_die("<$run_log_file",
+                                                       "it may indicates perf or run errors");
 
     my $line;
     my $run_log = '';
 
-    while(defined($line=<RUN_LOG_HANDLE>))
+    while(defined($line=<$run_log_handle>))
     {
         $run_log .= $line;
     }
-    close RUN_LOG_HANDLE;
+    close $run_log_handle;
 
     say "\n";
     say $run_log if $run_log ne '';
@@ -535,7 +535,7 @@ sub post_run_check
 
 ####################################################################################################
 
-sub make_at_least_n_thread_slots()
+sub make_at_least_n_thread_slots
 {
     my ($target_num, $logfile) = @_;
     my $freed_slot = 0;
@@ -551,12 +551,12 @@ sub make_at_least_n_thread_slots()
 
                 $error  = 1 if($result =~ s/^--error--//);
 
-                die "[error] fail to open $logfile" if !open LOGFILE, ">>$logfile";
-                print LOGFILE "\n\n";
-                print LOGFILE $THREAD_POOL{$thread->tid()};
-                print LOGFILE "\n\n";
-                print LOGFILE $result;
-                close COMPILE_LOGFILE;
+                my $log_handle = Veronica::Common::open_or_die(">>$logfile");
+                print $log_handle "\n\n";
+                print $log_handle $THREAD_POOL{$thread->tid()};
+                print $log_handle "\n\n";
+                print $log_handle $result;
+                close $log_handle;
 
                 delete $THREAD_POOL{$thread->tid()};
 
@@ -570,14 +570,14 @@ sub make_at_least_n_thread_slots()
     return $error;
 }
 
-sub thread_start()
+sub thread_start
 {
     my ($filename, $compile_cmd) = @_;
     my $thread = threads->new(\&thread_main, "$compile_cmd");
     $THREAD_POOL{$thread->tid()} = "$filename --cmd-- $compile_cmd";
 }
 
-sub thread_main()
+sub thread_main
 {
     my ($run_cmd) = @_;
     my $result = `$run_cmd 2>&1`;
@@ -594,8 +594,7 @@ sub spec_init
 {
     (my $bench_name) = @_;
     
-    mkdir $WORKING_TEMP_DIR if !-e $WORKING_TEMP_DIR;
-    die "[error] unable to create working temp dir at $WORKING_TEMP_DIR" if !-e $WORKING_TEMP_DIR;
+    Veronica::Common::mkdir_or_die("$WORKING_TEMP_DIR");
 
     if(!($bench_name =~ '(2006|2017)_(all|int|fp)'))
     {
