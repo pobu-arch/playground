@@ -9,7 +9,7 @@ use Cwd 'abs_path';
 
 use lib $ENV{'VERONICA_PERL'};
 use Veronica::Common;
-use Veronica::Thread;
+use Veronica::Threads;
 
 use threads;
 
@@ -377,17 +377,8 @@ sub spec_compile
 
         if($BUILD_CPU_NUM > 1)
         {
-            if(scalar threads->list() < $BUILD_CPU_NUM)
-            {
-                &thread_start($filename, $compile_cmd);
-            }
-            else
-            {
-                $error = make_at_least_n_thread_slots(1, $compile_log_file);
-                goto BUILD_ERROR if $error;
-
-                &thread_start($filename, $compile_cmd);
-            }
+            $error = Veronica::Threads::thread_start($compile_cmd, ">>$compile_log_file");
+            goto BUILD_ERROR if $error;
         }
         else
         {
@@ -399,7 +390,7 @@ sub spec_compile
     }
 
     # empty the thread pool
-    $error = make_at_least_n_thread_slots(scalar threads->list(), $compile_log_file) if($BUILD_CPU_NUM > 1);
+    $error = Veronica::Threads::join_n_thread_with_log(scalar threads->list()) if($BUILD_CPU_NUM > 1);
     goto BUILD_ERROR if($error);
 
     # linking
@@ -428,7 +419,7 @@ sub spec_compile
     BUILD_ERROR:
     if($error)
     {
-        make_at_least_n_thread_slots(scalar threads->list(), $compile_log_file) if($BUILD_CPU_NUM > 1);
+        Veronica::Threads::join_n_thread_with_log(scalar threads->list()) if($BUILD_CPU_NUM > 1);
 
         say "\n";
         say "[error] build error detected for $bench_name";
@@ -527,61 +518,6 @@ sub post_run_check
     say "\n";
     say $run_log if $run_log ne '';
     say $pre_cmd_log;
-}
-
-####################################################################################################
-
-# Thread Management
-
-####################################################################################################
-
-sub make_at_least_n_thread_slots
-{
-    my ($target_num, $logfile) = @_;
-    my $freed_slot = 0;
-    my $error = 0;
-
-    while(1)
-    {
-        foreach my $thread (threads->list())
-        {
-            if($thread->is_joinable())
-            {
-                my $result = $thread->join();
-
-                $error  = 1 if($result =~ s/^--error--//);
-
-                my $log_handle = Veronica::Common::open_or_die(">>$logfile");
-                print $log_handle "\n\n";
-                print $log_handle $THREAD_POOL{$thread->tid()};
-                print $log_handle "\n\n";
-                print $log_handle $result;
-                close $log_handle;
-
-                delete $THREAD_POOL{$thread->tid()};
-
-                $freed_slot++;
-            }
-        }
-        last if($freed_slot >= $target_num);
-
-        #sleep(1);
-    }
-    return $error;
-}
-
-sub thread_start
-{
-    my ($filename, $compile_cmd) = @_;
-    my $thread = threads->new(\&thread_main, "$compile_cmd");
-    $THREAD_POOL{$thread->tid()} = "$filename --cmd-- $compile_cmd";
-}
-
-sub thread_main
-{
-    my ($run_cmd) = @_;
-    my $result = `$run_cmd 2>&1`;
-    $? ? return "--error-- $result" : return $result;
 }
 
 ####################################################################################################
