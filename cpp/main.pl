@@ -4,15 +4,15 @@ use strict;
 use warnings;
 use File::Find;
 use File::Copy;
-use Cwd 'abs_path';
-use threads;
+use lib "$ENV{'VERONICA'}/perl";
+use Veronica::Common;
 
 our $COMPILER = 'g++';
 our $FLAGS    = '-O3 -g';
 
-our $THIS_DIR         = &get_script_path;
+our $THIS_DIR         = Veronica::Common::get_script_path();
 our $WORKING_TEMP_DIR = "$THIS_DIR/../_results";
-our $VERONICA_DIR     = "$THIS_DIR/../veronica/cpp";
+our $VERONICA_CPP_DIR = "$ENV{'VERONICA'}/cpp";
 our %BENCH_INFO;
 our @TASK_QUEUE;
 
@@ -40,19 +40,13 @@ sub bench_init()
     foreach my $name (@bench_names)
     {
         $BENCH_INFO{$+{dir}} = '' if ($name =~ /(?<dir>.+)\/Makefile/);
-        say "[info-script] detected $+{dir}";
+        Veronica::Common::say_level("detected $+{dir}", 4);
     }
 
-    die "[error] veronica is not imported !" if $VERONICA_DIR eq '/cpp';
-    say "[info-script] veronica dir is at $VERONICA_DIR";
-    say "[info-script] playground dir is at $WORKING_TEMP_DIR";
-    say "[info-script] working temp dir is at $WORKING_TEMP_DIR";
-}
-
-sub get_script_path()
-{
-    (my $final_path = $+{path}) =~ s/\/$// if(abs_path($0) =~ /(?<path>\/.+\/)/);
-    return $final_path;
+    die "[error] Veronica is not imported !" if $VERONICA_CPP_DIR eq '/cpp';
+    Veronica::Common::say_level("veronica CPP Library dir is at $VERONICA_CPP_DIR", 4);
+    Veronica::Common::say_level("playground dir is at $WORKING_TEMP_DIR", 4);
+    Veronica::Common::say_level("working temp dir is at $WORKING_TEMP_DIR", 4);
 }
 
 sub argument_parsing()
@@ -60,7 +54,7 @@ sub argument_parsing()
     my $bench_name = '';
     my $need_clean = 0;
 
-    say '[info-script] parsing arguments ...';
+    Veronica::Common::say_level("parsing arguments ...", 4);
 
     if(@ARGV < 1)
     {
@@ -98,8 +92,9 @@ sub argument_parsing()
     }
 
     die "[error-script] please specify the benchmark(s)" if $bench_name eq '';
-    say "[info-script] the selected benchmark is $bench_name" if $bench_name ne '';
-    say '[warning-script] the build_only option is ON' if $build_only;
+
+    Veronica::Common::say_level("the selected benchmark is $bench_name", 4) if $bench_name ne '';
+    Veronica::Common::say_level("the build_only option is ON", 3) if $build_only;
 
     #read pre cmd input from stdin, auto timeout
     my $timeout = 1;
@@ -111,13 +106,13 @@ sub argument_parsing()
 
         $pre_cmd=<STDIN>;
         chomp $pre_cmd if $pre_cmd ne '';
-        say "[info-script] the preceding command is \"$pre_cmd\"";
+        Veronica::Common::say_level("the preceding command is \"$pre_cmd\"", 4);
 
         alarm 0;
     };
-    say '[warning-script] stdin timeout' if $@ eq 'alarm';
+    Veronica::Common::say_level("stdin timeout", 3) if $@ eq 'alarm';
 
-    say "[info-script] cleaning results dir $WORKING_TEMP_DIR ...";
+    Veronica::Common::say_level("cleaning results dir $WORKING_TEMP_DIR ...", 4);
     `rm -irf $WORKING_TEMP_DIR/*`;
 
     return ($build_only, $pre_cmd);
@@ -134,7 +129,7 @@ sub bench_compile()
     die "[error-script] unable to create $target_dir" if !-e $target_dir;
 
     chdir "$source_dir";
-    my $parameters = "source_dir=$source_dir target_dir=$target_dir inc_dir=$VERONICA_DIR";
+    my $parameters = "source_dir=$source_dir target_dir=$target_dir inc_dir=$VERONICA_CPP_DIR";
        $parameters.= " compiler=\"$COMPILER\" \"flags=$FLAGS\"";
 
     say "\n";

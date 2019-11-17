@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include "pobu.h"
+#include "veronica.h"
 
 using namespace std;
 
@@ -12,7 +12,7 @@ int main()
     srand(time(NULL));
     
     // make sure mem addr is aligned
-    uint64_t* start_addr = (uint64_t*)page_aligned_malloc(MEM_SIZE);
+    uint64_t* start_addr = (uint64_t*)veronica::page_aligned_malloc(MEM_SIZE);
     if(start_addr != NULL) memset(start_addr, 0, MEM_SIZE);
 
     // enable THP
@@ -22,7 +22,7 @@ int main()
         return 1;
     }*/
 
-    uint64_t num_entries = MEM_SIZE / CACHE_BLOCK_SIZE;
+    uint64_t num_entries = MEM_SIZE / veronica::CACHE_BLOCK_SIZE;
     uint64_t num_iterations = 30000;
     printf("[into] entering into the main loop with %lld iterations\n", num_iterations);
     
@@ -34,7 +34,7 @@ int main()
 
     while (num_iterations--)
     {
-        for (uint64_t i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE)
+        for (uint64_t i = 0; i < num_entries; i+= veronica::CACHE_BLOCK_SIZE)
         {
     	    //volatile uint64_t temp = *((volatile uint64_t*)start_addr + i);
             *((volatile uint64_t*)start_addr + i) = 0;
