@@ -11,7 +11,7 @@ our $COMPILER = 'g++';
 our $FLAGS    = '-O3 -g';
 
 our $THIS_DIR         = Veronica::Common::get_script_path();
-our $WORKING_TEMP_DIR = "$THIS_DIR/../_results";
+our $RESULTS_DIR      = "$THIS_DIR/../_results";
 our $VERONICA_CPP_DIR = "$ENV{'VERONICA'}/cpp";
 our %BENCH_INFO;
 our @TASK_QUEUE;
@@ -33,8 +33,8 @@ foreach my $bench_name (@TASK_QUEUE)
 
 sub bench_init()
 {
-    mkdir $WORKING_TEMP_DIR if !-e $WORKING_TEMP_DIR;
-    die "[error-script] unable to create working temp dir at $WORKING_TEMP_DIR" if !-e $WORKING_TEMP_DIR;
+    mkdir $RESULTS_DIR if !-e $RESULTS_DIR;
+    die "[error-script] unable to create working temp dir at $RESULTS_DIR" if !-e $RESULTS_DIR;
 
     my @bench_names = glob "*/Makefile";
     foreach my $name (@bench_names)
@@ -45,8 +45,8 @@ sub bench_init()
 
     die "[error] Veronica is not imported !" if $VERONICA_CPP_DIR eq '/cpp';
     Veronica::Common::say_level("veronica CPP Library dir is at $VERONICA_CPP_DIR", 4);
-    Veronica::Common::say_level("playground dir is at $WORKING_TEMP_DIR", 4);
-    Veronica::Common::say_level("working temp dir is at $WORKING_TEMP_DIR", 4);
+    Veronica::Common::say_level("playground dir is at $RESULTS_DIR", 4);
+    Veronica::Common::say_level("working temp dir is at $RESULTS_DIR", 4);
 }
 
 sub argument_parsing()
@@ -112,8 +112,8 @@ sub argument_parsing()
     };
     Veronica::Common::say_level("stdin timeout", 3) if $@ eq 'alarm';
 
-    Veronica::Common::say_level("cleaning results dir $WORKING_TEMP_DIR ...", 4);
-    `rm -irf $WORKING_TEMP_DIR/*`;
+    Veronica::Common::say_level("cleaning results dir $RESULTS_DIR ...", 4);
+    `rm -irf $RESULTS_DIR/*`;
 
     return ($build_only, $pre_cmd);
 }
@@ -122,7 +122,7 @@ sub bench_compile()
 {
     my ($bench_name)    = @_;
     my $source_dir      = "$THIS_DIR/$bench_name";
-    my $target_dir      = "$WORKING_TEMP_DIR/$bench_name";
+    my $target_dir      = "$RESULTS_DIR/$bench_name";
     my $compile_logfile = "$target_dir/compile.log";
 
     mkdir $target_dir if !-e $target_dir;
@@ -151,7 +151,7 @@ sub bench_run()
 {
     my ($bench_name, $pre_cmd) = @_;
     my $source_dir = "$THIS_DIR/$bench_name";
-    my $target_dir = "$WORKING_TEMP_DIR/$bench_name";
+    my $target_dir = "$RESULTS_DIR/$bench_name";
 
     chdir "$source_dir";
     say "\n";
