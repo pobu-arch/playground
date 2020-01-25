@@ -5,6 +5,8 @@ source_dir  = empty
 target_dir 	= empty
 inc_dir     = empty
 
+runargs     = empty
+
 ifeq ($(cc),empty)
 	$(error "compiler error")
 endif
@@ -28,7 +30,7 @@ bin: $(source_file)
 
 run: $(bin)
 	#time $(target_dir)/bin | tee -a $(run_log)
-	$(target_dir)/bin
+	$(target_dir)/bin $(runargs)
 
 clean:
 	rm -f $(target_dir)/bin

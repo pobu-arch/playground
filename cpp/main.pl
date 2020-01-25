@@ -14,15 +14,15 @@ our $THIS_DIR         = Veronica::Common::get_script_path();
 our $RESULTS_DIR      = "$THIS_DIR/../_results";
 our $VERONICA_CPP_DIR = "$ENV{'VERONICA'}/cpp";
 our %BENCH_INFO;
-our @TASK_QUEUE;
+our %TASK_QUEUE;
 
 &bench_init();
 my ($build_only, $pre_cmd) = &argument_parsing;
 
-foreach my $bench_name (@TASK_QUEUE)
+foreach my $bench_name (keys %TASK_QUEUE)
 {
     my $build_error = &bench_compile($bench_name);
-    &bench_run($bench_name, $pre_cmd) if(!$build_error & !$build_only);
+    &bench_run($pre_cmd, $bench_name, $TASK_QUEUE{$bench_name}) if(!$build_error & !$build_only);
 }
 
 ####################################################################################################
@@ -47,6 +47,7 @@ sub bench_init()
     Veronica::Common::say_level("veronica CPP Library dir is at $VERONICA_CPP_DIR", 4);
     Veronica::Common::say_level("playground dir is at $RESULTS_DIR", 4);
     Veronica::Common::say_level("working temp dir is at $RESULTS_DIR", 4);
+    Veronica::Common::say_level("init done\n\n", 4);
 }
 
 sub argument_parsing()
@@ -69,7 +70,7 @@ sub argument_parsing()
             if($bench_supported =~ $current_arg)
             {
                 $bench_name = $bench_supported;
-                push @TASK_QUEUE, $bench_name;
+                $TASK_QUEUE{$bench_name} = '';
                 last;
             }
         }
@@ -83,6 +84,11 @@ sub argument_parsing()
             elsif($current_arg =~ /-build_only/)
             {
                 $build_only = 1;
+            }
+            elsif($current_arg =~ /-runargs='(?<runargs>.*)'/)
+            {
+                Veronica::Common::say_level("the run args for $bench_name is ".$+{runargs}, 4);
+                $TASK_QUEUE{$bench_name} = $+{runargs};
             }
             else
             {
@@ -149,11 +155,11 @@ sub bench_compile()
 
 sub bench_run()
 {
-    my ($bench_name, $pre_cmd) = @_;
+    my ($pre_cmd, $bench_name, $runargs) = @_;
     my $source_dir = "$THIS_DIR/$bench_name";
     my $target_dir = "$RESULTS_DIR/$bench_name";
 
     chdir "$source_dir";
     say "\n";
-    system "$pre_cmd make run source_dir=$source_dir target_dir=$target_dir";
+    system "$pre_cmd make run source_dir=$source_dir target_dir=$target_dir runargs=$runargs";
 }
