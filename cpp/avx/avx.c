@@ -19,7 +19,7 @@ static inline void prefetch_range(void *addr, size_t len)
 
 #define SIZE 100000000
 
-typedef float F_TYPE;
+typedef double F_TYPE;
 typedef unsigned long long int uint64;
 
 double sum_double_avx(const double* pbuf, uint64 cntbuf)  
@@ -123,7 +123,7 @@ int main()
 
         if(sizeof(F_TYPE) == sizeof(double))
                 printf("sum = %f\n", sum_double_avx(array, SIZE));
-        else printf("sum = %f\n", sum_single_avx(array, SIZE));
+        //else printf("sum = %f\n", sum_single_avx(array, SIZE));
 
         free(array);
         
