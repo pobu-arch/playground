@@ -1,3 +1,32 @@
+//[header]
+// A simple program that uses ray-tracing to render a scene made out of spheres
+//[/header]
+//[compile]
+// Download the simpleshapes.cpp and geometry.h files to a folder.
+// Open a shell/terminal, and run the following command where the files is saved:
+//
+// c++ -o simpleshapes simpleshapes.cpp -O3 -std=c++11 -DMAYA_STYLE
+//
+// Run with: ./simpleshapes. Open the file ./out.png in Photoshop or any program
+// reading PPM files.
+//[/compile]
+//[ignore]
+// Copyright (C) 2012  www.scratchapixel.com
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//[/ignore]
+
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
@@ -9,23 +38,8 @@
 #include <cmath>
 #include <limits>
 #include <random>
-#include <ctime>
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-using namespace std;
 
 #include "geometry.h"
-#include "my_kernel.h"
-
-#define OBJ_NUM 256
-#define SCREEN_WIDTH 3600
-#define SCREEN_HEIGHT 3600
-
-#define GPU
-#ifdef GPU
-#define BlockDim 32
-#define GridDim  (SCREEN_WIDTH / BlockDim + 1)
-#endif
 
 const float kInfinity = std::numeric_limits<float>::max();
 std::random_device rd;
@@ -33,22 +47,16 @@ std::mt19937 gen(rd());
 std::uniform_real_distribution<> dis(0, 1);
 
 inline
-float clamp(const float& lo, const float& hi, const float& v)
-{
-    return std::max(lo, std::min(hi, v));
-}
+float clamp(const float &lo, const float &hi, const float &v)
+{ return std::max(lo, std::min(hi, v)); }
 
 inline
-float deg2rad(const float& deg)
-{
-    return deg * 3.1415926 / 180;
-}
+float deg2rad(const float &deg)
+{ return deg * M_PI / 180; }
 
 inline
-Vec3f mix(const Vec3f& a, const Vec3f& b, const float& mixValue)
-{
-    return a * (1 - mixValue) + b * mixValue;
-}
+Vec3f mix(const Vec3f &a, const Vec3f& b, const float &mixValue)
+{ return a * (1 - mixValue) + b * mixValue; }
 
 struct Options
 {
@@ -63,28 +71,28 @@ struct Options
 // [/comment]
 class Object
 {
-public:
+ public:
     Object() : color(dis(gen), dis(gen), dis(gen)) {}
     virtual ~Object() {}
     // Method to compute the intersection of the object with a ray
     // Returns true if an intersection was found, false otherwise
     // See method implementation in children class for details
-    virtual bool intersect(const Vec3f&, const Vec3f&, float&) const = 0;
+    virtual bool intersect(const Vec3f &, const Vec3f &, float &) const = 0;
     // Method to compute the surface data such as normal and texture coordnates at the intersection point.
     // See method implementation in children class for details
-    virtual void getSurfaceData(const Vec3f&, Vec3f&, Vec2f&) const = 0;
+    virtual void getSurfaceData(const Vec3f &, Vec3f &, Vec2f &) const = 0;
     Vec3f color;
 };
 
 // [comment]
 // Compute the roots of a quadratic equation
 // [/comment]
-bool solveQuadratic(const float& a, const float& b, const float& c, float& x0, float& x1)
+bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, float &x1)
 {
     float discr = b * b - 4 * a * c;
     if (discr < 0) return false;
     else if (discr == 0) {
-        x0 = x1 = -0.5 * b / a;
+        x0 = x1 = - 0.5 * b / a;
     }
     else {
         float q = (b > 0) ?
@@ -103,7 +111,7 @@ bool solveQuadratic(const float& a, const float& b, const float& c, float& x0, f
 class Sphere : public Object
 {
 public:
-    Sphere(const Vec3f& c, const float& r) : radius(r), radius2(r* r), center(c) {}
+    Sphere(const Vec3f &c, const float &r) : radius(r), radius2(r *r ), center(c) {}
     // [comment]
     // Ray-sphere intersection test
     //
@@ -114,7 +122,7 @@ public:
     // \param[out] is the distance from the ray origin to the intersection point
     //
     // [/comment]
-    bool intersect(const Vec3f& orig, const Vec3f& dir, float& t) const
+    bool intersect(const Vec3f &orig, const Vec3f &dir, float &t) const
     {
         float t0, t1; // solutions for t if the ray intersects
 #if 0
@@ -156,7 +164,7 @@ public:
     // \param[out] tex are the texture coordinates at Phit
     //
     // [/comment]
-    void getSurfaceData(const Vec3f& Phit, Vec3f& Nhit, Vec2f& tex) const
+    void getSurfaceData(const Vec3f &Phit, Vec3f &Nhit, Vec2f &tex) const
     {
         Nhit = Phit - center;
         Nhit.normalize();
@@ -165,8 +173,8 @@ public:
         // the spherical coordinates of Phit.
         // atan2 returns a value in the range [-pi, pi] and we need to remap it to range [0, 1]
         // acosf returns a value in the range [0, pi] and we also need to remap it to the range [0, 1]
-        tex.x = (1 + atan2(Nhit.z, Nhit.x) / 3.1415926) * 0.5;
-        tex.y = acosf(Nhit.y) / 3.1415926;
+        tex.x = (1 + atan2(Nhit.z, Nhit.x) / M_PI) * 0.5;
+        tex.y = acosf(Nhit.y) / M_PI;
     }
     float radius, radius2;
     Vec3f center;
@@ -177,7 +185,7 @@ public:
 // is a pointer to the intersected object. The variable tNear is set to infinity and hitObject is set null if no intersection
 // was found.
 // [/comment]
-bool trace(const Vec3f& orig, const Vec3f& dir, const std::vector<std::unique_ptr<Object>>& objects, float& tNear, const Object*& hitObject)
+bool trace(const Vec3f &orig, const Vec3f &dir, const std::vector<std::unique_ptr<Object>> &objects, float &tNear, const Object *&hitObject)
 {
     tNear = kInfinity;
     std::vector<std::unique_ptr<Object>>::const_iterator iter = objects.begin();
@@ -196,11 +204,11 @@ bool trace(const Vec3f& orig, const Vec3f& dir, const std::vector<std::unique_pt
 // Compute the color at the intersection point if any (returns background color otherwise)
 // [/comment]
 Vec3f castRay(
-    const Vec3f& orig, const Vec3f& dir,
-    const std::vector<std::unique_ptr<Object>>& objects)
+    const Vec3f &orig, const Vec3f &dir,
+    const std::vector<std::unique_ptr<Object>> &objects)
 {
     Vec3f hitColor = 0;
-    const Object* hitObject = nullptr; // this is a pointer to the hit object
+    const Object *hitObject = nullptr; // this is a pointer to the hit object
     float t; // this is the intersection distance from the ray origin to the hit point
     if (trace(orig, dir, objects, t, hitObject)) {
         Vec3f Phit = orig + dir * t;
@@ -224,94 +232,11 @@ Vec3f castRay(
 // saved to a file.
 // [/comment]
 void render(
-    const Options& options,
-    const std::vector<std::unique_ptr<Object>>& objects)
+    const Options &options,
+    const std::vector<std::unique_ptr<Object>> &objects)
 {
-
-#ifdef GPU
-
-    int Block_Dim = BlockDim;
-    int Grid_Dim = GridDim;
-
-    if (Block_Dim * Block_Dim > 1024)
-    {
-        cout << "[Error] too many threads in block" << endl;
-        exit(-1);
-    }
-
-    if (Grid_Dim * Block_Dim < options.width)
-    {
-        cout << "[Error] number of threads in x/y dimensions less than number of array elements" << endl;
-        exit(-1);
-    }
-
-    cout << "Screen Dimension (x, y) = (" << options.width << ", " << options.height << ")" << endl;
-
-    Vec3f* dev_dir;
-    float* dev_camera;
-    Vec3f* host_dir;
-    int gpu_count;
-
-    cudaError_t errorcode = cudaGetDeviceCount(&gpu_count);
-    if (errorcode == cudaErrorNoDevice)
-    {
-        cout << "[Error] No GPUs are visible" << endl;
-        exit(-1);
-    }
-    else cudaSetDevice(0);
-
-    errorcode = cudaMalloc((void**)&dev_dir, options.width * options.height * sizeof(Vec3f)); // allocate memory on device
-    if (errorcode != cudaSuccess)
-    {
-        cout << "[Error] Not enough GPU memory for dev_dir" << endl;
-    }
-
-    errorcode = cudaMalloc((void**)&dev_camera, 4 * 4 * sizeof(float)); // allocate memory on device
-    if (errorcode != cudaSuccess)
-    {
-        cout << "[Error] Not enough GPU memory for dev_camera" << endl;
-    }
-
-    dim3 DimGrid(ceil(options.height / BlockDim), ceil(options.width / BlockDim), 1);
-    dim3 DimBlock(BlockDim, BlockDim, 1);
-    printf("Block_Dim = %d, Grid_Dim = %d\n", Block_Dim, Grid_Dim);
-
-    float scale = tan(deg2rad(options.fov * 0.5));
-    float imageAspectRatio = options.width / (float)options.height;
-
-    Vec3f orig;
-    options.cameraToWorld.multVecMatrix(Vec3f(0), orig);
-    float* host_camera = new float[4 * 4];
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-        {
-            host_camera[i * 4 + j] = options.cameraToWorld.x[i][j];
-        }
-    cudaMemcpy(dev_camera, host_camera, 4 * 4 * sizeof(float), cudaMemcpyHostToDevice);
-    
-    Vec3f* framebuffer = new Vec3f[options.width * options.height];
-
-    cout << "Begin GPU computation on dev_dir" << endl;
-    gpu_calc_xy <<<DimGrid, DimBlock >>> (dev_dir, dev_camera, options.width, options.height, scale, imageAspectRatio);
-    cout << "Complete GPU computation on dev_x and dev_y" << endl;
-
-    host_dir = new Vec3f[options.width * options.height]; // dynamically allocated memory for arrays on host
-
-    cudaMemcpy(host_dir, dev_dir, options.width * options.height * sizeof(Vec3f), cudaMemcpyDeviceToHost);
-    cout << "Complete GPU results copyback" << endl;
-
-    #pragma omp parallel for
-    for (uint32_t j = 0; j < options.height; ++j)
-    {
-        for (uint32_t i = 0; i < options.width; ++i)
-        {
-            framebuffer[j * options.width + i] = castRay(orig, host_dir[j * options.width + i], objects);
-        }
-    }
-
-#else
-    Vec3f* framebuffer = new Vec3f[options.width * options.height];
-    Vec3f* pix = framebuffer;
+    Vec3f *framebuffer = new Vec3f[options.width * options.height];
+    Vec3f *pix = framebuffer;
     float scale = tan(deg2rad(options.fov * 0.5));
     float imageAspectRatio = options.width / (float)options.height;
     // [comment]
@@ -321,19 +246,35 @@ void render(
     // [/comment]
     Vec3f orig;
     options.cameraToWorld.multVecMatrix(Vec3f(0), orig);
-    for (uint32_t j = 0; j < options.height; ++j)
-    {
-        for (uint32_t i = 0; i < options.width; ++i)
-        {
+    for (uint32_t j = 0; j < options.height; ++j) {
+        for (uint32_t i = 0; i < options.width; ++i) {
+            // [comment]
+            // Generate primary ray direction. Compute the x and y position
+            // of the ray in screen space. This gives a point on the image plane
+            // at z=1. From there, we simply compute the direction by normalized
+            // the resulting vec3f variable. This is similar to taking the vector
+            // between the point on the image plane and the camera origin, which
+            // in camera space is (0,0,0):
+            //
+            // ray.dir = normalize(Vec3f(x,y,-1) - Vec3f(0));
+            // [/comment]
+#ifdef MAYA_STYLE
             float x = (2 * (i + 0.5) / (float)options.width - 1) * scale;
             float y = (1 - 2 * (j + 0.5) / (float)options.height) * scale * 1 / imageAspectRatio;
+#elif
+
+            float x = (2 * (i + 0.5) / (float)options.width - 1) * imageAspectRatio * scale;
+            float y = (1 - 2 * (j + 0.5) / (float)options.height) * scale;
+#endif
+            // [comment]
+            // Don't forget to transform the ray direction using the camera-to-world matrix.
+            // [/comment]
             Vec3f dir;
             options.cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
             dir.normalize();
             *(pix++) = castRay(orig, dir, objects);
         }
     }
-#endif
 
     // Save result to a PPM image (keep these flags if you compile under Windows)
     std::ofstream ofs("./out.ppm", std::ios::out | std::ios::binary);
@@ -347,7 +288,7 @@ void render(
 
     ofs.close();
 
-    delete[] framebuffer;
+    delete [] framebuffer;
 }
 
 // [comment]
@@ -355,18 +296,15 @@ void render(
 // as well as set the options for the render (image widht and height etc.).
 // We then call the render function().
 // [/comment]
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    clock_t start = clock();
-    
     // creating the scene (adding objects and lights)
     std::vector<std::unique_ptr<Object>> objects;
 
     // generate a scene made of random spheres
-    uint32_t numSpheres = OBJ_NUM;
+    uint32_t numSpheres = 32;
     gen.seed(0);
-    for (uint32_t i = 0; i < numSpheres; ++i)
-    {
+    for (uint32_t i = 0; i < numSpheres; ++i) {
         Vec3f randPos((0.5 - dis(gen)) * 10, (0.5 - dis(gen)) * 10, (0.5 + dis(gen) * 10));
         float randRadius = (0.5 + dis(gen) * 0.5);
         objects.push_back(std::unique_ptr<Object>(new Sphere(randPos, randRadius)));
@@ -374,17 +312,13 @@ int main(int argc, char** argv)
 
     // setting up options
     Options options;
-    options.width = SCREEN_WIDTH;
-    options.height = SCREEN_HEIGHT;
+    options.width = 640;
+    options.height = 480;
     options.fov = 51.52;
     options.cameraToWorld = Matrix44f(0.945519, 0, -0.325569, 0, -0.179534, 0.834209, -0.521403, 0, 0.271593, 0.551447, 0.78876, 0, 4.208271, 8.374532, 17.932925, 1);
 
     // finally, render
     render(options, objects);
-
-    clock_t end = clock();
-
-    printf("Time: %f s.\n", (1.0 * end - start) / CLOCKS_PER_SEC); // exec. time
 
     return 0;
 }
