@@ -202,7 +202,8 @@ Vec3f castRay(
     Vec3f hitColor = 0;
     const Object* hitObject = nullptr; // this is a pointer to the hit object
     float t; // this is the intersection distance from the ray origin to the hit point
-    if (trace(orig, dir, objects, t, hitObject)) {
+    if (trace(orig, dir, objects, t, hitObject))
+    {
         Vec3f Phit = orig + dir * t;
         Vec3f Nhit;
         Vec2f tex;
@@ -247,6 +248,8 @@ void render(
 
     cout << "Screen Dimension (x, y) = (" << options.width << ", " << options.height << ")" << endl;
 
+    clock_t start = clock();
+
     Vec3f* dev_dir;
     float* dev_camera;
     Vec3f* host_dir;
@@ -287,7 +290,7 @@ void render(
         {
             host_camera[i * 4 + j] = options.cameraToWorld.x[i][j];
         }
-    cudaMemcpy(dev_camera, host_camera, 4 * 4 * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpyToSymbol(dev_camera, host_camera, 4 * 4 * sizeof(float), cudaMemcpyHostToDevice);
     
     Vec3f* framebuffer = new Vec3f[options.width * options.height];
 
@@ -300,6 +303,10 @@ void render(
     cudaMemcpy(host_dir, dev_dir, options.width * options.height * sizeof(Vec3f), cudaMemcpyDeviceToHost);
     cout << "Complete GPU results copyback" << endl;
 
+    clock_t end = clock();
+
+    printf("GPU calc Time: %f s.\n", (1.0 * end - start) / CLOCKS_PER_SEC); // exec. time
+
     #pragma omp parallel for
     for (uint32_t j = 0; j < options.height; ++j)
     {
@@ -308,6 +315,7 @@ void render(
             framebuffer[j * options.width + i] = castRay(orig, host_dir[j * options.width + i], objects);
         }
     }
+    cout << "Complete Ray casting" << endl;
 
 #else
     Vec3f* framebuffer = new Vec3f[options.width * options.height];
@@ -384,7 +392,8 @@ int main(int argc, char** argv)
 
     clock_t end = clock();
 
-    printf("Time: %f s.\n", (1.0 * end - start) / CLOCKS_PER_SEC); // exec. time
+    printf("Overall Time: %f s.\n", (1.0 * end - start) / CLOCKS_PER_SEC); // exec. time
 
     return 0;
 }
+
