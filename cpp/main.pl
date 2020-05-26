@@ -8,7 +8,7 @@ use lib "$ENV{'VERONICA'}/perl";
 use Veronica::Common;
 
 our $COMPILER = 'gcc';
-our $FLAGS    = '-O3 -g -fpermissive -mavx2';
+our $FLAGS    = '-O3 -g -lstdc++';
 
 our $THIS_DIR         = Veronica::Common::get_script_path();
 our $RESULTS_DIR      = "$THIS_DIR/../_results";
@@ -16,22 +16,22 @@ our $VERONICA_CPP_DIR = "$ENV{'VERONICA'}/cpp";
 our %BENCH_INFO;
 our %TASK_QUEUE;
 
-&bench_init();
-my ($build_only, $pre_cmd) = &argument_parsing;
+&playground_init();
+my ($build_only, $pre_cmd) = &argument_parse;
 
 foreach my $bench_name (keys %TASK_QUEUE)
 {
-    my $build_error = &bench_compile($bench_name);
-    &bench_run($pre_cmd, $bench_name, $TASK_QUEUE{$bench_name}) if(!$build_error & !$build_only);
+    my $build_error = &cpp_compile($bench_name);
+    &cpp_run($pre_cmd, $bench_name, $TASK_QUEUE{$bench_name}) if(!$build_error & !$build_only);
 }
 
 ####################################################################################################
 
-# Misc.
+# playground init
 
 ####################################################################################################
 
-sub bench_init()
+sub playground_init()
 {
     mkdir $RESULTS_DIR if !-e $RESULTS_DIR;
     die "[error-script] unable to create working temp dir at $RESULTS_DIR" if !-e $RESULTS_DIR;
@@ -52,10 +52,17 @@ sub bench_init()
     Veronica::Common::say_level("init done\n\n", 5);
 }
 
-sub argument_parsing()
+####################################################################################################
+
+# arguments parse
+
+####################################################################################################
+
+sub argument_parse()
 {
     my $bench_name = '';
     my $need_clean = 0;
+    my $build_only = 0;
 
     Veronica::Common::say_level("parsing arguments ...", 5);
 
@@ -126,7 +133,13 @@ sub argument_parsing()
     return ($build_only, $pre_cmd);
 }
 
-sub bench_compile()
+####################################################################################################
+
+# cpp compile
+
+####################################################################################################
+
+sub cpp_compile()
 {
     my ($bench_name)    = @_;
     my $source_dir      = "$THIS_DIR/$bench_name";
@@ -140,11 +153,12 @@ sub bench_compile()
     my $parameters = "source_dir=$source_dir target_dir=$target_dir inc_dir=$VERONICA_CPP_DIR";
        $parameters.= " compiler=\"$COMPILER\" \"flags=$FLAGS\"";
 
-    say "\n";
+    Veronica::Common::say_level("\n", 0);
 
     my $compile_log = `make bin $parameters`;
-    say "$compile_log";
-    if($compile_log =~ 'errors generated.')
+    Veronica::Common::say_level("$compile_log", 5);
+
+    if($? != 0)
     {
         die "[error] fail to open $compile_logfile" if !open COMPILE_LOGFILE, ">$compile_logfile";
         print COMPILE_LOGFILE $compile_log;
@@ -152,16 +166,24 @@ sub bench_compile()
         return 1;
     }
 
+    close COMPILE_LOGFILE;
     return 0;
 }
 
-sub bench_run()
+####################################################################################################
+
+# cpp run
+
+####################################################################################################
+
+sub cpp_run()
 {
     my ($pre_cmd, $bench_name, $runargs) = @_;
     my $source_dir = "$THIS_DIR/$bench_name";
     my $target_dir = "$RESULTS_DIR/$bench_name";
 
     chdir "$source_dir";
-    say "\n";
+    Veronica::Common::say_level("\n", 0);
+    Veronica::Common::say_level("running $bench_name ...", 5);
     system "$pre_cmd make run source_dir=$source_dir target_dir=$target_dir runargs=$runargs";
 }
