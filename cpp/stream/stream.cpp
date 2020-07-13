@@ -1,6 +1,6 @@
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include "veronica.h"
 
 using namespace std;
@@ -12,7 +12,7 @@ int main()
     srand(time(NULL));
     
     // make sure mem addr is aligned
-    uint64_t* start_addr = (uint64_t*)veronica::page_aligned_malloc(MEM_SIZE);
+    uint64_t* start_addr = (uint64_t*)veronica::aligned_malloc(MEM_SIZE);
     if(start_addr != NULL) memset(start_addr, 0, MEM_SIZE);
 
     // enable THP
@@ -23,9 +23,10 @@ int main()
     }*/
 
     uint64_t num_entries = MEM_SIZE / veronica::CACHE_BLOCK_SIZE;
-    uint64_t num_iterations = 30000;
+    uint64_t num_iterations = 2000;
     printf("[into] entering into the main loop with %lld iterations\n", num_iterations);
     
+    veronica::set_timer_start(0);
     // streaming
     /*for (int i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE * 1)
     {
@@ -40,7 +41,9 @@ int main()
             *((volatile uint64_t*)start_addr + i) = 0;
         }
     }
-
+    veronica::set_timer_end(0);
+    veronica::print_timer(0, "test");
+    
     free(start_addr);
 
     return 0;

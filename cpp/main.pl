@@ -7,8 +7,8 @@ use File::Copy;
 use lib "$ENV{'VERONICA'}/perl";
 use Veronica::Common;
 
-our $COMPILER = 'gcc';
-our $FLAGS    = '-O3 -g -lstdc++';
+our $COMPILER = 'g++';
+our $FLAGS    = '-O3 -g';
 
 our $THIS_DIR         = Veronica::Common::get_script_path();
 our $RESULTS_DIR      = "$THIS_DIR/../_results";
@@ -47,8 +47,8 @@ sub playground_init()
 
     die "[error] Veronica is not imported !" if $VERONICA_CPP_DIR eq '/cpp';
     Veronica::Common::say_level("veronica CPP Library dir is at $VERONICA_CPP_DIR", 5);
-    Veronica::Common::say_level("playground dir is at $RESULTS_DIR", 5);
-    Veronica::Common::say_level("working temp dir is at $RESULTS_DIR", 5);
+    Veronica::Common::say_level("playground dir           is at $THIS_DIR", 5);
+    Veronica::Common::say_level("working temp dir         is at $RESULTS_DIR", 5);
     Veronica::Common::say_level("init done\n\n", 5);
 }
 

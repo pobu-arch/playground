@@ -3,48 +3,54 @@
 #include "veronica.h"
 using namespace std;
 
-#define NUM_ELEMENTS (uint64_t) 2147483647
-typedef uint32_t element;
-
-element* ptr[NUM_ELEMENTS];
+typedef veronica::uint64 element;
+const   veronica::uint64 NUM_ELEMENTS = 2147483647;
 
 int main()
 {
     // make sure mem addr is aligned
-    element** mem = (element**)veronica::page_aligned_malloc(NUM_ELEMENTS * sizeof(element*));
-    if(mem != NULL) memset(mem, 0, NUM_ELEMENTS);
+    element* element_ptr  = (element*)veronica::aligned_malloc(NUM_ELEMENTS * sizeof(element*));
+    if(element_ptr != NULL)
+    {
+        memset(element_ptr, 0, NUM_ELEMENTS * sizeof(element*));
+    }
+    else
+    {
+        printf("[error] no enough memory\n");
+        exit(-1);
+    }
 
-    uint64_t num_iterations = 10;
+    veronica::uint64 num_iterations = 10;
 
-    printf("[into] linked list element size is %lu bytes\n", sizeof(element));
-    printf("[info] initializing linked list with %lld elements\n", NUM_ELEMENTS);
+    printf("[info] linked list element size is %lu bytes\n", sizeof(element));
+    printf("[info] initializing linked list with %llu elements\n", NUM_ELEMENTS);
 
-    uint64_t remains  = NUM_ELEMENTS;
-    uint64_t pre_index = 1;
+    veronica::uint64 remains  = NUM_ELEMENTS;
+    veronica::uint64 pre_index = 1;
     while(remains--)
     {
-        uint64_t next_index = veronica::int_hash(pre_index);
-        ptr[pre_index] = ptr[next_index];
+        veronica::uint64 next_index = veronica::hash_within_int(pre_index);
+        element_ptr[pre_index] = element_ptr[next_index];
         pre_index = next_index;
     }
 
-    printf("[info] iterating linked list with %lld elements\n", NUM_ELEMENTS);
-    uint64_t current_index = 1;
-    element* temp_ptr = ptr[current_index];
+    printf("[info] iterating linked list with %llu elements\n", NUM_ELEMENTS);
+    element* temp_element_ptr = &element_ptr[0];
+    
     veronica::set_timer_start(0);
     while (num_iterations--)
     {
         remains  = NUM_ELEMENTS;
         while(remains--)
         {
-            printf("%p %p\n", temp_ptr, (element*)*temp_ptr);
-            temp_ptr = (element*) *temp_ptr;
+            printf("%p %p\n", temp_element_ptr, (element*)*temp_element_ptr);
+            temp_element_ptr = (element*) *temp_element_ptr;
         }
     }
     veronica::set_timer_end(0);
     veronica::print_timer(0, "test");
 
-    free(mem);
+    free(element_ptr);
 
     return 0;
 }
