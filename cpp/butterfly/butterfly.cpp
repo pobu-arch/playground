@@ -16,6 +16,11 @@ struct raw
     long long int time;
 };
 
+int test_fp(int a)
+{
+    return a + 1;
+}
+
 vector<float> calc_EMA(const vector<float>& input, const float& alpha)
 {
     vector<float> output;
@@ -68,7 +73,7 @@ vector<float> calc_RSI(const vector<raw>& raw, const int64& length)
         }
         else
         {
-            down.push_back(abs(input_diff.at(index)));
+            //down.push_back(abs(input_diff.at(index)));
         }
     }
 
@@ -165,6 +170,7 @@ vector<raw> generate_K_mins(const vector<raw>& raw_vector, int64 k)
 
 int main(int argc, char** argv)
 {
+    /*
     vector<raw> raw_vector = digest_rawdata_input("raw.txt");    
     vector<raw> k3         = generate_K_mins(raw_vector, 3);
     vector<raw> k5         = generate_K_mins(raw_vector, 5);
@@ -177,4 +183,13 @@ int main(int argc, char** argv)
     }
 
     vector<float> rsi15    = calc_RSI(temp, 6);
+    */
+
+    printf("The total num of arguments is %d\n", argc);
+
+    for(int i =0; i < argc; i++)
+        printf("The first argument is %s\n", argv[i]);
+    
+    int(*p)(int) = test_fp;
+    printf("pointer is %p\n", p);
 }
