@@ -155,6 +155,7 @@ vector<raw> generate_K_mins(const vector<raw>& raw_vector, int64 k)
             if(raw_temp.price_high < raw_vector.at((index + step) % raw_vector.size()).price_high)
             {
                 raw_temp.price_high = raw_vector.at((index + step) % raw_vector.size()).price_high;
+                goto re;
             }
             if(raw_temp.price_low > raw_vector.at((index + step) % raw_vector.size()).price_low)
             {
@@ -165,6 +166,7 @@ vector<raw> generate_K_mins(const vector<raw>& raw_vector, int64 k)
         result.push_back(raw_temp);
     }
 
+re:
     return result;
 }
 
@@ -191,5 +193,5 @@ int main(int argc, char** argv)
         printf("The first argument is %s\n", argv[i]);
     
     int(*p)(int) = test_fp;
-    printf("pointer is %p\n", p);
+    printf("pointer is %p %d\n", p, p(5));
 }

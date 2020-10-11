@@ -18,8 +18,8 @@
     #define ADJ_FACTOR 3
 #endif
 
-//#define CPU_PART
-#define GPU_PART
+#define CPU_PART
+//#define GPU_PART
 #define CHECK_PART
 //#define PRINT_PART
 

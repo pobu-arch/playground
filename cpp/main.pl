@@ -7,8 +7,8 @@ use File::Copy;
 use lib "$ENV{'VERONICA'}/perl";
 use Veronica::Common;
 
-our $COMPILER = 'g++';
-our $FLAGS    = '-O3 -g';
+our $COMPILER = 'gcc';
+our $FLAGS    = '-O3 -g -lstdc++';
 
 our $THIS_DIR         = Veronica::Common::get_script_path();
 our $RESULTS_DIR      = "$THIS_DIR/../_results";
