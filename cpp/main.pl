@@ -36,20 +36,20 @@ sub playground_init()
     mkdir $RESULTS_DIR if !-e $RESULTS_DIR;
     die "[error-script] unable to create working temp dir at $RESULTS_DIR" if !-e $RESULTS_DIR;
 
-    Veronica::Common::set_msg_level(5);
+    Veronica::Common::set_log_level(5);
 
     my @bench_names = glob "*/Makefile";
     foreach my $name (@bench_names)
     {
         $BENCH_INFO{$+{dir}} = '' if ($name =~ /(?<dir>.+)\/Makefile/);
-        Veronica::Common::say_level("detected $+{dir}", 5);
+        Veronica::Common::log_level("detected $+{dir}", 5);
     }
 
     die "[error] Veronica is not imported !" if $VERONICA_CPP_DIR eq '/cpp';
-    Veronica::Common::say_level("veronica CPP Library dir is at $VERONICA_CPP_DIR", 5);
-    Veronica::Common::say_level("playground dir           is at $THIS_DIR", 5);
-    Veronica::Common::say_level("working temp dir         is at $RESULTS_DIR", 5);
-    Veronica::Common::say_level("init done\n\n", 5);
+    Veronica::Common::log_level("veronica CPP Library dir is at $VERONICA_CPP_DIR", 5);
+    Veronica::Common::log_level("playground dir           is at $THIS_DIR", 5);
+    Veronica::Common::log_level("working temp dir         is at $RESULTS_DIR", 5);
+    Veronica::Common::log_level("init done\n\n", 5);
 }
 
 ####################################################################################################
@@ -64,7 +64,7 @@ sub argument_parse()
     my $need_clean = 0;
     my $build_only = 0;
 
-    Veronica::Common::say_level("parsing arguments ...", 5);
+    Veronica::Common::log_level("parsing arguments ...", 5);
 
     if(@ARGV < 1)
     {
@@ -96,7 +96,7 @@ sub argument_parse()
             }
             elsif($current_arg =~ /-runargs='(?<runargs>.*)'/)
             {
-                Veronica::Common::say_level("the run args for $bench_name is ".$+{runargs}, 5);
+                Veronica::Common::log_level("the run args for $bench_name is ".$+{runargs}, 5);
                 $TASK_QUEUE{$bench_name} = $+{runargs};
             }
             else
@@ -108,8 +108,8 @@ sub argument_parse()
 
     die "[error-script] please specify the benchmark(s)" if $bench_name eq '';
 
-    Veronica::Common::say_level("the selected benchmark is $bench_name", 5) if $bench_name ne '';
-    Veronica::Common::say_level("the build_only option is ON", 3) if $build_only;
+    Veronica::Common::log_level("the selected benchmark is $bench_name", 5) if $bench_name ne '';
+    Veronica::Common::log_level("the build_only option is ON", 3) if $build_only;
 
     #read pre cmd input from stdin, auto timeout
     my $timeout = 1;
@@ -121,13 +121,13 @@ sub argument_parse()
 
         $pre_cmd=<STDIN>;
         chomp $pre_cmd if $pre_cmd ne '';
-        Veronica::Common::say_level("the preceding command is \"$pre_cmd\"", 5);
+        Veronica::Common::log_level("the preceding command is \"$pre_cmd\"", 5);
 
         alarm 0;
     };
-    Veronica::Common::say_level("stdin timeout", 3) if $@ eq 'alarm';
+    Veronica::Common::log_level("stdin timeout", 3) if $@ eq 'alarm';
 
-    Veronica::Common::say_level("cleaning results dir $RESULTS_DIR ...", 5);
+    Veronica::Common::log_level("cleaning results dir $RESULTS_DIR ...", 5);
     `rm -irf $RESULTS_DIR/*`;
 
     return ($build_only, $pre_cmd);
@@ -153,10 +153,10 @@ sub cpp_compile()
     my $parameters = "source_dir=$source_dir target_dir=$target_dir inc_dir=$VERONICA_CPP_DIR";
        $parameters.= " compiler=\"$COMPILER\" \"flags=$FLAGS\"";
 
-    Veronica::Common::say_level("\n", 0);
+    Veronica::Common::log_level("\n", 0);
 
     my $compile_log = `make bin $parameters`;
-    Veronica::Common::say_level("$compile_log", 5);
+    Veronica::Common::log_level("$compile_log", 5);
 
     if($? != 0)
     {
@@ -183,7 +183,7 @@ sub cpp_run()
     my $target_dir = "$RESULTS_DIR/$bench_name";
 
     chdir "$source_dir";
-    Veronica::Common::say_level("\n", 0);
-    Veronica::Common::say_level("running $bench_name ...", 5);
+    Veronica::Common::log_level("\n", 0);
+    Veronica::Common::log_level("running $bench_name ...", 5);
     system "$pre_cmd make run source_dir=$source_dir target_dir=$target_dir runargs=$runargs";
 }

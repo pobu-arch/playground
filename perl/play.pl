@@ -8,7 +8,7 @@ use Veronica::Common;
 use Veronica::Threads;
 use File::Copy qw(move);
 
-Veronica::Common::set_msg_level(5);
+Veronica::Common::set_log_level(5);
 
 chdir("/Users/bowen/Library/Mobile\ Documents/JFJWWP64QD~com~goodiware~GoodReader/Documents/@\ Papers");
 
