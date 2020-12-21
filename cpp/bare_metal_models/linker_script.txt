@@ -1,0 +1,114 @@
+OUTPUT_ARCH( "riscv" ) 
+/* ENTRY(_boot) */
+
+RAM_SIZE = 32K;
+
+MEMORY
+{
+	ROM (rx)	: ORIGIN = 0x00000000,	LENGTH = 16K	/* cannot use variables here */
+	RAM (wrx)	: ORIGIN = 0x00000080,	LENGTH = 32K-0x80	/* cannot use variables here; if starting address is 0x100000000 (33bit) the linker will overflow it to 0x0 */
+}
+
+/* define stack pointer address */
+	_sp = RAM_SIZE;
+
+/* define stack size and heap size here */
+	stack_size = 1024;
+	/* heap_size = 256; */
+
+/* define beginning and ending of stack */
+	_stack_start = ORIGIN(RAM)+LENGTH(RAM);
+	_stack_end = _stack_start - stack_size;
+
+
+SECTIONS
+{
+    /* text: code section */
+	.vectors :
+	{
+		*(.vectors)
+	} >ROM
+
+	.text :
+	{
+		. = ALIGN(4);
+		*(.boot_code)
+		. = ALIGN(4);
+		*(.text)
+		. = ALIGN(4);
+	} >ROM
+
+	/* data: Initialized data segment */
+	. = ALIGN(4);
+    _begin_data = . ;
+	.data : 
+	{
+		PROVIDE( __global_pointer$ = . + (4K / 2) );
+		*(.srodata)
+		. = ALIGN(4);
+		*(.srodata*)
+		. = ALIGN(4);
+		*(.rodata)
+		. = ALIGN(4);
+		*(.rodata*)
+		. = ALIGN(4);
+		*(.sdata)
+		. = ALIGN(4);
+		*(.data)
+		. = ALIGN(4);
+	} >RAM
+
+
+	.bss : ALIGN(4)
+	{
+		*(.sbss)
+		. = ALIGN(4);
+		*(.bss)
+    	. = ALIGN(4);
+	} >RAM
+
+	/* end of initialized data segment */
+	_end = . ;
+
+	.heap : ALIGN(4)
+	{
+/*
+		_heap_start = .;
+		. = . + heap_size;
+		_heap_end = .;
+*/
+		_heap_start = .;
+		_heap_end = RAM_SIZE - stack_size;
+
+	. = ALIGN(4);
+	} >RAM
+
+
+
+    /* crap */
+    .eh_frame 0x0: 
+    {
+        *(.eh_frame)
+    }
+
+	.comment 0x0 : 
+    {
+        *(.comment)
+    }
+
+	.debug 0x0 : 
+    {
+        *(.debug*)
+    }
+
+	/* Remove information from the standard libraries. Comment out if none used */
+	/DISCARD/ :
+	{
+/*
+		libc.a ( * )
+		libm.a ( * )
+		libgcc.a ( * )
+*/
+	}
+
+}
