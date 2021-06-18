@@ -51,7 +51,7 @@ int main()
 
     while (num_iterations--)
     {
-	//printf("[info] this is iteration %lld\n", num_iterations);
+	    //printf("[info] this is iteration %lld\n", num_iterations);
         for (veronica::uint64 i = 0; i < num_entries; i += 1)
         {
 	    //printf("[info] about to access %p\n", start_addr + i * stride) ;
