@@ -8,7 +8,7 @@ use lib "$ENV{'VERONICA'}/perl";
 use Veronica::Common;
 
 our $COMPILER = 'gcc';
-our $FLAGS    = '-O3 -g -lstdc++';
+our $FLAGS    = '-O3 -g -ggdb -lstdc++ -lm';
 
 our $THIS_DIR         = Veronica::Common::get_script_path();
 our $RESULTS_DIR      = "$THIS_DIR/../_results";
