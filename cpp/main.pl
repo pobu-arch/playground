@@ -145,6 +145,7 @@ sub cpp_compile()
     my $source_dir      = "$THIS_DIR/$bench_name";
     my $target_dir      = "$RESULTS_DIR/$bench_name";
     my $compile_logfile = "$target_dir/compile.log";
+    my $disam_logfile   = "$target_dir/disasm.log";
 
     mkdir $target_dir if !-e $target_dir;
     die "[error-script] unable to create $target_dir" if !-e $target_dir;
@@ -164,6 +165,10 @@ sub cpp_compile()
         print COMPILE_LOGFILE $compile_log;
         close COMPILE_LOGFILE;
         return 1;
+    }
+    else
+    {
+        system "objdump -S $target_dir/bin > $disam_logfile";
     }
 
     close COMPILE_LOGFILE;
