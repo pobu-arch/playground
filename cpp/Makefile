@@ -30,7 +30,7 @@ bin: $(source_file)
 
 run: $(bin)
 	#time $(target_dir)/bin | tee -a $(run_log)
-	taskset -c 4 $(target_dir)/bin $(runargs)
+	$(target_dir)/bin $(runargs)
 
 clean:
 	rm -f $(target_dir)/bin
