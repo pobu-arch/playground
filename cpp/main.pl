@@ -7,9 +7,10 @@ use File::Copy;
 use lib "$ENV{'VERONICA'}/perl";
 use Veronica::Common;
 
-our $COMPILER        = 'gcc';
-our $COMPILER_FLAGS  = '-O3 -g -ggdb';
-our $LINKER_FLAGS    = '-lstdc++ -lm';
+our $TOOLCHAIN_PREFIX   = '';
+our $COMPILER           = 'gcc';
+our $COMPILER_FLAGS     = '-O3 -g -ggdb';
+our $LINKER_FLAGS       = '-lstdc++ -lm';
 
 our $THIS_DIR         = Veronica::Common::get_script_path();
 our $RESULTS_DIR      = "$THIS_DIR/../_results";
@@ -151,8 +152,10 @@ sub cpp_compile()
     mkdir $target_dir if !-e $target_dir;
     die "[error-script] unable to create $target_dir" if !-e $target_dir;
 
+    $COMPILER = $TOOLCHAIN_PREFIX.$COMPILER;
     my $arch_type = Veronica::Common::get_target_arch_type($COMPILER);
     my $final_flags = "$COMPILER_FLAGS $LINKER_FLAGS -D$arch_type";
+    # TODO: get AVX2 parameter programmatically
        $final_flags .= ' -DAVX2' if $arch_type eq 'X86_64';
 
     chdir "$source_dir";

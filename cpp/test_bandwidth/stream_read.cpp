@@ -1,11 +1,13 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
+#include <iomanip>
 #include "veronica.h"
+
 using namespace std;
 
 // will start the stream with START_SIZE all the way upto MEM_SIZE
-#define LOOP_ITERATION      2000
+#define LOOP_ITERATION      200
 #define LOOP_UNROLL         16
 #define START_SIZE          4096
 #define MEM_SIZE            (uint64)(256 * 1024 * 1024)
@@ -47,7 +49,7 @@ inline void stream_load(void* start_addr)
                     "movdqa 960(%0), %%xmm7\n\t"
                     :
                     : "r"(start_addr)
-                    : "%xmm1", "memory");
+                    );
     #endif
 
     #ifdef AVX2
@@ -68,8 +70,7 @@ inline void stream_load(void* start_addr)
                     "vmovapd 896(%0), %%xmm6\n\t"
                     "vmovapd 960(%0), %%xmm7\n\t"
                     :
-                    : "r"(start_addr)
-                    : "%xmm1", "memory");
+                    : "r"(start_addr));
     #endif
 
     #ifdef AVX512
@@ -91,13 +92,40 @@ inline void stream_load(void* start_addr)
                     "vmovdqa64 960(%0), %%xmm7\n\t"
                     :
                     : "r"(start_addr)
-                    : "%xmm1", "memory");
+                    );
     #endif
 #endif
+
+#ifdef RISCV64
+        asm volatile("ld t1, 0(%0)\n\t"
+                    "ld t1, 64(%0)\n\t"
+                    "ld t1, 128(%0)\n\t"
+                    "ld t1, 192(%0)\n\t"
+                    "ld t1, 256(%0)\n\t"
+                    "ld t1, 320(%0)\n\t"
+                    "ld t1, 384(%0)\n\t"
+                    "ld t1, 448(%0)\n\t"
+                    "ld t1, 512(%0)\n\t"
+                    "ld t1, 576(%0)\n\t"
+                    "ld t1, 640(%0)\n\t"
+                    "ld t1, 704(%0)\n\t"
+                    "ld t1, 768(%0)\n\t"
+                    "ld t1, 832(%0)\n\t"
+                    "ld t1, 896(%0)\n\t"
+                    "ld t1, 960(%0)\n\t"
+                    :
+                    : "r"(start_addr)
+                    );
+#endif
+
 }
 
 void print_stream_info()
 {
+    #ifdef SSE2
+        cout <<"[Info] Using SSE2 stream load instructions" << endl;
+    #endif
+    
     #ifdef AVX2
         cout <<"[Info] Using AVX2 stream load instructions" << endl;
     #endif
@@ -108,7 +136,7 @@ int main()
     srand(time(NULL));
     uint64 num_block = MEM_SIZE / CACHE_BLOCK_SIZE;
     // make sure mem addr is aligned
-    byte* start_addr = (byte*)veronica::aligned_calloc(MEM_SIZE);
+    byte* start_addr = (byte*)veronica::aligned_calloc(MEM_SIZE, CACHE_BLOCK_SIZE);
     if(start_addr != NULL)
     {
         //init(start_addr, num_block);
@@ -147,9 +175,11 @@ int main()
         }
         veronica::set_timer_end(0);
         double time = veronica::get_elapsed_time_in_us(0);
-        double amount_of_data = LOOP_ITERATION * MEM_SIZE;
-        double bandwidth = amount_of_data / time / 1024 / 1024 / 1024 * 1000000; // GigaByte/s
+        double amount_of_data = LOOP_ITERATION * MEM_SIZE / 1024 / 1024 / 1024;
+        double bandwidth = amount_of_data / time * 1000000; // GigaByte/s
         cout <<  bandwidth << " GB/s" << endl;
+        //cout << "[Debug] amount_of_data is " << amount_of_data << "GB, with time is ";
+        //cout << fixed << setprecision(2) << time << " us" << endl;
 
         current_size *= 2;
     }
