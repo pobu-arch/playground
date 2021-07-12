@@ -14,7 +14,7 @@ struct node
 };
 
 // will start the stream with START_SIZE all the way upto MEM_SIZE
-#define REPEAT              4000
+#define REPEAT              200
 #define LOOP_UNROLL         64
 #define START_SIZE          8192
 #define MEM_SIZE            (uint64)(256 * 1024 * 1024)
