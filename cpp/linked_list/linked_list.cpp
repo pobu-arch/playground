@@ -16,14 +16,14 @@ int main()
     }
     else
     {
-        printf("[error] no enough memory\n");
+        printf("[Error] no enough memory\n");
         exit(-1);
     }
 
     veronica::uint64 num_iterations = 10;
 
-    printf("[info] linked list element size is %lu bytes\n", sizeof(element));
-    printf("[info] initializing linked list with %llu elements\n", NUM_ELEMENTS);
+    printf("[Info] linked list element size is %lu bytes\n", sizeof(element));
+    printf("[Info] initializing linked list with %llu elements\n", NUM_ELEMENTS);
 
     veronica::uint64 remains  = NUM_ELEMENTS;
     veronica::uint64 pre_index = 1;
@@ -34,7 +34,7 @@ int main()
         pre_index = next_index;
     }
 
-    printf("[info] iterating linked list with %llu elements\n", NUM_ELEMENTS);
+    printf("[Info] iterating linked list with %llu elements\n", NUM_ELEMENTS);
     element* temp_element_ptr = &element_ptr[0];
     
     veronica::set_timer_start(0);

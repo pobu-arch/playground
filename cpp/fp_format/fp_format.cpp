@@ -5,7 +5,7 @@
 #include <bitset>
 #include "veronica.h"
 
-//TODO: need to work on big endian
+// TODO: need to work on big endian
 
 using namespace std;
 
@@ -29,7 +29,7 @@ template <class T> bitset<T> any_num_to_bitset(const veronica::byte* byte_ptr, c
 
 int main()
 {
-	printf("[info] FP size = %lu Bytes\n", sizeof(FP));
+	printf("[Info] FP size = %lu Bytes\n", sizeof(FP));
 	int input = 15;
 	cout << any_num_to_bitset(input, sizeof(input)) << endl;
 	return 0;

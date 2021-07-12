@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 
     if(argc < 4)
     {
-        printf("[error] please specify num_rows, num_cols and the level of sparsity(1.0-100.0)\n");
+        printf("[Error] please specify num_rows, num_cols and the level of sparsity(1.0-100.0)\n");
         exit(-1);
     }
 
@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 
     if(num_rows == 0 || num_cols == 0 || sparsity < 0 || sparsity > 100)
     {
-        printf("[error] wrong num of num_rows or num_cols or sparsity\n");
+        printf("[Error] wrong num of num_rows or num_cols or sparsity\n");
         exit(-1);
     }
 
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
     srand (time(NULL));
     output = fopen("matrix.mtx","w");
 
-    printf("[info] nnz = %lld\n", nnz);
+    printf("[Info] nnz = %lld\n", nnz);
     fprintf(output, "%lld %lld %lld\n", num_rows, num_cols, nnz);
 
     for(uint64 row_index = 0; row_index < num_rows; row_index++)

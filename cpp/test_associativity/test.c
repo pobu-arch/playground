@@ -24,7 +24,7 @@ uint64* access_location_pre_computing(const uint64 test_size)
         uint64* location_array = (uint64*)calloc(locaion_array_size, sizeof(uint64));
         if(location_array == NULL)
         {
-                printf("[error] no enough memory for loction array\n");
+                printf("[Error] no enough memory for loction array\n");
                 exit(-1);
         }
         
@@ -63,7 +63,7 @@ void main_logic(BYTE* test_buffer)
         while(current_test_size <= TEST_CACHE_SIZE_HI)
         {
         	uint64* location_array = access_location_pre_computing(current_test_size);
-                printf("[info] starting cache size test at %6d KB, ", current_test_size/1024);
+                printf("[Info] starting cache size test at %6d KB, ", current_test_size/1024);
 
                 gettimeofday(&start, &tz);
 
@@ -91,11 +91,11 @@ void main_logic(BYTE* test_buffer)
 
 int main()
 {
-	printf("[info] starting malloc test buffer, size = %llu KB ...\n", TEST_BUFFER_SIZE/1024);
+	printf("[Info] starting malloc test buffer, size = %llu KB ...\n", TEST_BUFFER_SIZE/1024);
 	BYTE* test_buffer = (BYTE*)calloc(TEST_BUFFER_SIZE, sizeof(BYTE));
 	if(test_buffer == NULL)
 	{
-        	printf("[error] no enough memory for test buffer\n");
+        	printf("[Error] no enough memory for test buffer\n");
         	exit(-1);
 	}
 

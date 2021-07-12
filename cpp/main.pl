@@ -51,6 +51,8 @@ sub playground_init()
     Veronica::Common::log_level("veronica CPP Library dir is at $VERONICA_CPP_DIR", 5);
     Veronica::Common::log_level("playground dir           is at $THIS_DIR", 5);
     Veronica::Common::log_level("working temp dir         is at $RESULTS_DIR", 5);
+    Veronica::Common::log_level("page size                is ".Veronica::Common::get_page_size(), 5);
+    Veronica::Common::log_level("cache line size          is ".Veronica::Common::get_cache_line_size(), 5);
     Veronica::Common::log_level("init done\n\n", 5);
 }
 
@@ -156,7 +158,7 @@ sub cpp_compile()
     my $arch_type = Veronica::Common::get_target_arch_type($COMPILER);
     my $final_flags = "$COMPILER_FLAGS $LINKER_FLAGS -D$arch_type";
     # TODO: get AVX2 parameter programmatically
-       $final_flags .= ' -DAVX2' if $arch_type eq 'X86_64';
+    # $final_flags .= ' -DAVX2' if $arch_type eq 'X86_64';
 
     chdir "$source_dir";
     my $parameters = "source_dir=$source_dir target_dir=$target_dir inc_dir=$VERONICA_CPP_DIR";
