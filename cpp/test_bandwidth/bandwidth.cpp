@@ -8,7 +8,7 @@
 using namespace std;
 
 // will start the stream with START_SIZE all the way upto MEM_SIZE
-#define LOOP_ITERATION      200
+#define REPEAT              200
 #define LOOP_UNROLL         32 // TODO: need to change the stream kernel if this number is changed
 #define START_SIZE          2048
 #define MEM_SIZE            (uint64)(512 * 1024 * 1024)
@@ -19,7 +19,7 @@ int main()
     uint64 num_line = MEM_SIZE / cache_line_size;
     
     // make sure mem addr is aligned
-    byte* start_addr = (byte*)veronica::aligned_calloc(MEM_SIZE, cache_line_size);
+    byte* start_addr = (byte*)veronica::aligned_calloc(MEM_SIZE, veronica::get_page_size());
     if(start_addr == NULL)
     {
         printf("[Error] unable to allocate memory\n");
@@ -36,7 +36,7 @@ int main()
     uint64 current_size = START_SIZE;
     while(current_size <= MEM_SIZE)
     {
-        uint64 loops_remained             = LOOP_ITERATION * MEM_SIZE / current_size;
+        uint64 loops_remained             = REPEAT * MEM_SIZE / current_size;
         const uint64 stride_per_iteration = LOOP_UNROLL * cache_line_size;
         const uint64 num_line             = current_size / cache_line_size;
 
@@ -52,7 +52,7 @@ int main()
         }
         veronica::set_timer_end(0);
 
-        loops_remained = LOOP_ITERATION * MEM_SIZE / current_size;
+        loops_remained = REPEAT * MEM_SIZE / current_size;
         veronica::set_timer_start(1);
         while (loops_remained--)
         {
@@ -63,7 +63,7 @@ int main()
         }
         veronica::set_timer_end(1);
         
-        double amount_of_data = LOOP_ITERATION * MEM_SIZE / 1024 / 1024 / 1024;
+        double amount_of_data = REPEAT * MEM_SIZE / 1024 / 1024 / 1024;
         
         double load_time = veronica::get_elapsed_time_in_us(0);
         double load_bandwidth = amount_of_data / load_time * 1000000; // GigaByte/s
