@@ -83,9 +83,9 @@ int main()
         init(nodes, memory, total_num_node, shuffle_factor);
         veronica::set_timer_end(1);
 
-        uint64 load_time = veronica::get_elapsed_time_in_us(0);
+        double load_time = veronica::get_elapsed_time_in_us(1);
 
-        printf("[Info] init took %lld us\n", load_time);
+        printf("[Info] init took %.2lf s\n", load_time / 1000);
     }
     else
     {
@@ -122,7 +122,7 @@ int main()
         fflush(stdout);
 
         current_size *= 1.8;
-        //exit(0);
+        exit(0);
     }
 
     free(nodes);
