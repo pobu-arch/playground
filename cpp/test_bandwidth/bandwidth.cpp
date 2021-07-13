@@ -8,9 +8,9 @@
 using namespace std;
 
 // will start the stream with START_SIZE all the way upto MEM_SIZE
-#define REPEAT              200
+#define REPEAT              500
 #define LOOP_UNROLL         32 // TODO: need to change the stream kernel if this number is changed
-#define START_SIZE          2048
+#define START_SIZE          4096
 #define MEM_SIZE            (uint64)(512 * 1024 * 1024)
 
 int main()
