@@ -79,7 +79,13 @@ int main()
     node* memory = (node*)veronica::aligned_calloc(total_num_node * sizeof(node), page_size);
 	if(memory != NULL and nodes != NULL)
     {
+        veronica::set_timer_start(1);
         init(nodes, memory, total_num_node, shuffle_factor);
+        veronica::set_timer_end(1);
+
+        uint64 load_time = veronica::get_elapsed_time_in_us(0);
+
+        printf("[Info] init took %lld us\n", load_time);
     }
     else
     {
