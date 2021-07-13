@@ -85,7 +85,7 @@ int main()
 
         double load_time = veronica::get_elapsed_time_in_us(1);
 
-        printf("[Info] init took %.2lf s\n", load_time / 1000);
+        printf("[Info] init took %.2lf s\n", load_time / 1000 / 1000);
     }
     else
     {
