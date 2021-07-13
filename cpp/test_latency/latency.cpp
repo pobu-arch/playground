@@ -114,11 +114,10 @@ int main()
         veronica::set_timer_end(0);
 
         uint64 amount_of_loads = (REPEAT * MEM_SIZE / current_size) * (current_num_node - 1);
-
         double load_time = veronica::get_elapsed_time_in_us(0);
         double load_latency =  (load_time * 1000) / amount_of_loads; // nano secs
 
-        printf("total time is %.2lf us, num of loads is %lld, average load latency is %.2lf ns\n", load_time, amount_of_loads, load_latency);
+        printf("total time is %.2lf s, num of loads is %lld, average load latency is %.2lf ns\n", load_time / 1000 / 1000, amount_of_loads, load_latency);
         fflush(stdout);
 
         current_size *= 1.8;
