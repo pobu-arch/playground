@@ -14,9 +14,9 @@ struct node
 };
 
 // will start the stream with START_SIZE all the way upto MEM_SIZE
-#define REPEAT              200
-#define LOOP_UNROLL         64
-#define START_SIZE          8192
+#define REPEAT              500
+#define LOOP_UNROLL         32
+#define START_SIZE          8192 * 16
 #define MEM_SIZE            (uint64)(256 * 1024 * 1024)
 
 void init(node** nodes, node* memory, uint64 num_node)
@@ -28,13 +28,17 @@ void init(node** nodes, node* memory, uint64 num_node)
     }
 
     printf("[Info] shuffling the nodes array ...\n");
-    for (uint64 i = 0; i < num_node - 1; i++)
+    int repeat = REPEAT / 10;
+    while(repeat--)
     {
-		uint64 swap = i + rand() % (num_node - i);
-		node* tmp = nodes[swap];
-		nodes[swap] = nodes[i];
-		nodes[i] = tmp;
-	}
+        for (uint64 i = 0; i < num_node - 1; i++)
+        {
+            uint64 swap = i + rand() % (num_node - i);
+            node* tmp = nodes[swap];
+            nodes[swap] = nodes[i];
+            nodes[i] = tmp;
+        }
+    }
 
     printf("[Info] connecting the nodes array ...\n");
 	for (uint64 i = 0; i < num_node - 1; i++)
