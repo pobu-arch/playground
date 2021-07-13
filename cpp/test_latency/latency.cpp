@@ -51,7 +51,7 @@ void init(node** nodes, node* memory, uint64 num_node, uint64 shuffle_factor)
 	nodes[num_node - 1]->next_ptr = NULL;
 }
 
-void pointer_chasing(node* p, uint64 shuffle_factor)
+inline void pointer_chasing(node* p, uint64 shuffle_factor)
 {
     uint64 i = shuffle_factor;
     while(i > 0)
@@ -177,7 +177,7 @@ int main()
         }
         veronica::set_timer_end(0);
 
-        uint64 amount_of_loads = (REPEAT * MEM_SIZE / current_size) * (current_num_node - 1);
+        uint64 amount_of_loads = (REPEAT * MEM_SIZE / current_size) * (current_num_node);
         double load_time = veronica::get_elapsed_time_in_us(0);
         double load_latency =  (load_time * 1000) / amount_of_loads; // nano secs
 
