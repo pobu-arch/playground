@@ -15,7 +15,7 @@ struct node
 
 // will start the stream with START_SIZE all the way upto MEM_SIZE
 #define REPEAT              500
-#define START_SIZE          8192
+#define START_SIZE          8192 * 3
 #define MEM_SIZE            (uint64)(512 * 1024 * 1024)
 
 void init(node** nodes, node* memory, uint64 num_node, uint64 shuffle_factor)
@@ -54,9 +54,73 @@ void init(node** nodes, node* memory, uint64 num_node, uint64 shuffle_factor)
 void pointer_chasing(node* p, uint64 shuffle_factor)
 {
     uint64 i = shuffle_factor;
-    while(i--)
+    while(i > 0)
     {
         p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        p = p->next_ptr;
+        i -= shuffle_factor;
     }
 
     // useless
