@@ -17,7 +17,7 @@ struct node
 #define REPEAT              500
 #define LOOP_UNROLL         32
 #define START_SIZE          8192
-#define MEM_SIZE            (uint64)(256 * 1024 * 1024)
+#define MEM_SIZE            (uint64)(512 * 1024 * 1024)
 
 void init(node** nodes, node* memory, uint64 num_node)
 {
@@ -110,7 +110,8 @@ int main()
         printf("total time is %.2lf us, num of loads is %lld, average load latency is %.2lf ns\n", load_time, amount_of_loads, load_latency);
         fflush(stdout);
 
-        current_size *= 2;
+        //current_size *= 2;
+        exit(0);
     }
 
     free(nodes);
