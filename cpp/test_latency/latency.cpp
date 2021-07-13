@@ -16,7 +16,7 @@ struct node
 // will start the stream with START_SIZE all the way upto MEM_SIZE
 #define REPEAT              500
 #define LOOP_UNROLL         32
-#define START_SIZE          8192 * 16
+#define START_SIZE          8192
 #define MEM_SIZE            (uint64)(256 * 1024 * 1024)
 
 void init(node** nodes, node* memory, uint64 num_node)
@@ -95,10 +95,9 @@ int main()
         // stream read
         while (loops_remained--)
         {
-            node* node = nodes[0];
             for (uint64 i = 0; i + LOOP_UNROLL < current_num_node; i+= LOOP_UNROLL)
             {
-                pointer_chasing(node);
+                pointer_chasing(nodes[i]);
             }
         }
         veronica::set_timer_end(0);
