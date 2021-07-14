@@ -10,7 +10,7 @@ using namespace std;
 struct node
 {
     node* next_ptr;
-    uint64 padding0[7];
+    uint64 padding0[(64 - sizeof(node*)) / sizeof(uint64)];
 };
 
 // will start the stream with START_SIZE all the way upto MEM_SIZE
@@ -51,12 +51,14 @@ void init(node** nodes, node* memory, uint64 num_node, uint64 shuffle_factor)
 	nodes[num_node - 1]->next_ptr = NULL;
 }
 
-inline void pointer_chasing(node* p, uint64 shuffle_factor)
+void pointer_chasing(node* p, uint64 shuffle_factor)
 {
+    node* enter_ptr = p;
+    //printf("[Debug] entering with %p and factor %lld\n", enter_ptr, shuffle_factor);
     uint64 i = shuffle_factor;
-    node* start_ptr = p;
     while(i--)
     {
+        //printf("[Debug] p is %p, stride = %lld\n", p, p->next_ptr - p);
         p = p->next_ptr;
     }
 
@@ -96,8 +98,8 @@ int main()
     uint64 current_size = START_SIZE;
     while(current_size <= MEM_SIZE)
     {
-        uint64 loops_remained             = REPEAT * MEM_SIZE / current_size;
-        const uint64 current_num_node     = current_size / sizeof(node);
+        uint64 loops_remained   = REPEAT * MEM_SIZE / current_size;
+        uint64 current_num_node = current_size / sizeof(node);
 
         printf("[Debug] loops = %llu, num_nodes = %llu\n", loops_remained, current_num_node);
         printf("[Result] testing latency for size %llu KB... ", current_size / 1024);
@@ -106,10 +108,9 @@ int main()
         // stream read
         while (loops_remained--)
         {
-            
             for (uint64 i = 0; i + shuffle_factor <= current_num_node; i+= shuffle_factor)
             {
-                //printf("[Debug] loops = %lld, i = %lld, current_num_nodes = %lld\n", loops_remained, i, current_num_node);
+                //printf("[Debug] loops = %llu, i = %llu, test size = %llu, node size = %llu, current_num_nodes = %llu, stride %llu\n", loops_remained, i, current_size, sizeof(node), current_num_node, (nodes + i) - nodes);
                 pointer_chasing(nodes[i], shuffle_factor);
             }
         }
@@ -122,7 +123,7 @@ int main()
         printf("pointer chasing total time is %.3lf secs, num of loads is %.3lf GInsts, average load latency is %.3lf ns\n", load_time / 1000 / 1000, amount_of_loads / 1000 / 1000 / 1000, load_latency);
         fflush(stdout);
 
-        current_size *= 1.6;
+        current_size *= 2;
         //exit(0);
     }
 
