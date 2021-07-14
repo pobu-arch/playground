@@ -10,23 +10,32 @@ using namespace std;
 struct node
 {
     node* next_ptr;
-    uint64 padding0[(64 - sizeof(node*)) / sizeof(uint64)];
+    uint64 padding[(64 - sizeof(node*)) / sizeof(uint64)];
 };
 
+// need to set this numer less than DTLB size
+#define ALLOWED_PAGES_IN_SHUFFLE    2
+#define REPEAT                      200
 // will start the stream with START_SIZE all the way upto MEM_SIZE
-#define REPEAT              200
-#define START_SIZE          (uint64)(8 * 1024)
+#define START_SIZE          (uint64)(64 * 1024)
 #define MEM_SIZE            (uint64)(512 * 1024 * 1024)
 
 void init(node** nodes, node* memory, uint64 num_node, uint64 shuffle_factor)
 {
     printf("[Info] initializing the nodes array ...\n");
-    for (uint64 i = 0; i < num_node; i++)
+    for (uint64 i = 0; i + shuffle_factor <= num_node; i+=shuffle_factor)
     {
-        nodes[i] = &memory[i];
+        for (uint64 j = 0; j < shuffle_factor; j++)
+        {
+            nodes[i + j] = &memory[i + j];
+            // from which round of shuffle
+            memory[i + j].padding[0] = i;
+            // index within a round of shuffle
+            memory[i + j].padding[1] = j;
+        }
     }
 
-    printf("[Info] shuffling the nodes array with factor %lld ...\n", shuffle_factor);
+    printf("[Info] shuffling the nodes array with factor %llu ...\n", shuffle_factor);
     for (uint64 i = 0; i + shuffle_factor <= num_node; i += shuffle_factor)
     {
         int64 repeat = REPEAT / 10;
@@ -51,17 +60,21 @@ void init(node** nodes, node* memory, uint64 num_node, uint64 shuffle_factor)
 	nodes[num_node - 1]->next_ptr = NULL;
 }
 
-void pointer_chasing(node* p, uint64 shuffle_factor)
+inline void pointer_chasing(node* p, uint64 shuffle_factor)
 {
     node* enter_ptr = p;
-    //printf("[Debug] entering with %p and factor %lld\n", enter_ptr, shuffle_factor);
+    //printf("[Debug] entering with %p and factor %llu\n", enter_ptr, shuffle_factor);
     uint64 i = shuffle_factor;
     while(i--)
     {
-        //printf("[Debug] p is %p, stride = %lld\n", p, p->next_ptr - p);
+        //uint64 p_i = p->padding[0];
+        //uint64 p_j = p->padding[1];
+        //printf("[Debug] pointing from memory[%llu][%llu] to ", p_i, p_j);
         p = p->next_ptr;
+        //uint64 next_i = p->padding[0];
+        //uint64 next_j = p->padding[1];
+        //printf("memory[%llu][%llu]\n", next_i, next_j);
     }
-
     // useless
     if(p == NULL) printf("\n");
 }
@@ -75,11 +88,11 @@ int main()
     printf("[Info] there are %llu nodes, with %lu bytes per node\n", total_num_node, sizeof(node));
     
     // make sure that one round of pointer chasing will not trigger more than 1 TLB miss
-    uint64 shuffle_factor = page_size / sizeof(node);
+    uint64 shuffle_factor = ALLOWED_PAGES_IN_SHUFFLE * page_size / sizeof(node);
 
     // make sure mem addr is aligned
     node** nodes = (node**)veronica::aligned_calloc(total_num_node * sizeof(node*), page_size);
-    node* memory = (node*)veronica::aligned_calloc(total_num_node * sizeof(node), page_size);
+    node* memory =  (node*)veronica::aligned_calloc(total_num_node * sizeof(node), page_size);
 	if(memory != NULL and nodes != NULL)
     {
         veronica::set_timer_start(1);
@@ -98,10 +111,11 @@ int main()
     uint64 current_size = START_SIZE;
     while(current_size <= MEM_SIZE)
     {
-        uint64 loops_remained   = REPEAT * MEM_SIZE / current_size;
+        uint64 loops_total      = REPEAT * MEM_SIZE / current_size;
+        uint64 loops_remained   = loops_total;
         uint64 current_num_node = current_size / sizeof(node);
 
-        printf("[Debug] loops = %llu, num_nodes = %llu\n", loops_remained, current_num_node);
+        printf("[Debug] loops = %llu, num_nodes = %llu\n", loops_total, current_num_node);
         printf("[Result] testing latency for size %llu KB... ", current_size / 1024);
 
         veronica::set_timer_start(0);
@@ -116,15 +130,15 @@ int main()
         }
         veronica::set_timer_end(0);
 
-        double amount_of_loads = (REPEAT * MEM_SIZE / current_size) * (current_num_node);
+        double amount_of_loads = loops_total * current_num_node;
         double load_time = veronica::get_elapsed_time_in_us(0);
         double load_latency = (load_time * 1000) / amount_of_loads; // nano secs
 
-        printf("pointer chasing total time is %.3lf secs, num of loads is %.3lf GInsts, average load latency is %.3lf ns\n", load_time / 1000 / 1000, amount_of_loads / 1000 / 1000 / 1000, load_latency);
+        printf("pointer chasing time is %.3lf secs, num of loads is %.3lf GInsts, average load latency is %.3lf ns\n", load_time / 1000 / 1000, amount_of_loads / 1000 / 1000 / 1000, load_latency);
         fflush(stdout);
 
         current_size *= 2;
-        //exit(0);
+        exit(0);
     }
 
     free(nodes);
