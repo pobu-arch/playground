@@ -179,7 +179,7 @@ sub cpp_compile()
     }
     else
     {
-        system "objdump -S $target_dir/bin > $disam_logfile";
+        system $TOOLCHAIN_PREFIX."objdump -S $target_dir/bin > $disam_logfile";
     }
 
     close COMPILE_LOGFILE;
