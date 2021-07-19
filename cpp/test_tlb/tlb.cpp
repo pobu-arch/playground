@@ -41,11 +41,6 @@ int main()
     printf("[info] end_addr is %p \n", start_addr + num_entries * stride);
 
     veronica::set_timer_start(0);
-    // streaming
-    /*for (int i = 0; i < num_entries; i+= CACHE_BLOCK_SIZE * 1)
-    {
-    	*((volatile uint64*)start_addr + i) = 0xff;
-    }*/
 
     veronica::uint64 temp = 0;
 
@@ -54,11 +49,10 @@ int main()
 	    //printf("[info] this is iteration %lld\n", num_iterations);
         for (veronica::uint64 i = 0; i < num_entries; i += 1)
         {
-	    //printf("[info] about to access %p\n", start_addr + i * stride) ;
+	        //printf("[info] about to access %p\n", start_addr + i * stride) ;
     	    temp += *(start_addr + i * stride);
-            //*((volatile uint64_t*)start_addr + i) = 0;
 
-	    //veronica::flush_cache_line_x86((start_addr + i * stride));
+	        //veronica::flush_cache_line_x86((start_addr + i * stride));
         }
     }
 

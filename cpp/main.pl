@@ -7,7 +7,9 @@ use File::Copy;
 use lib "$ENV{'VERONICA'}/perl";
 use Veronica::Common;
 
-our $TOOLCHAIN_PREFIX   = '';
+$TOP_INFO{'TOOLCHAIN_PREFIX'}   = '';
+#$TOP_INFO{'TOOLCHAIN_PREFIX'}   = 'aarch64-none-linux-gnu-';
+#$TOP_INFO{'TOOLCHAIN_PREFIX'}   = 'riscv64-unknown-linux-gnu-';
 our $COMPILER           = 'gcc';
 our $COMPILER_FLAGS     = '-O3 -g -ggdb';
 our $LINKER_FLAGS       = '-lstdc++ -lm';

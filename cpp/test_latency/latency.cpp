@@ -13,11 +13,12 @@ struct node
     uint64 padding[(64 - sizeof(node*)) / sizeof(uint64)];
 };
 
-// need to set this numer less than DTLB size
-#define ALLOWED_PAGES_IN_SHUFFLE    2
 #define REPEAT                      200
+
+// need to set this numer less than DTLB size
+#define ALLOWED_PAGES_IN_SHUFFLE    1
 // will start the stream with START_SIZE all the way upto MEM_SIZE
-#define START_SIZE          (uint64)(64 * 1024)
+#define START_SIZE          (uint64)(16 * 1024)
 #define MEM_SIZE            (uint64)(512 * 1024 * 1024)
 
 void init(node** nodes, node* memory, uint64 num_node, uint64 shuffle_factor)
@@ -67,13 +68,16 @@ inline void pointer_chasing(node* p, uint64 shuffle_factor)
     uint64 i = shuffle_factor;
     while(i--)
     {
-        //uint64 p_i = p->padding[0];
-        //uint64 p_j = p->padding[1];
-        //printf("[Debug] pointing from memory[%llu][%llu] to ", p_i, p_j);
+        /*
+        uint64 p_i = p->padding[0];
+        uint64 p_j = p->padding[1];
+        int64 stride = p->next_ptr - p;
+        printf("[Debug] pointing from memory[%llu][%llu] to ", p_i, p_j);
+        uint64 next_i = p->next_ptr->padding[0];
+        uint64 next_j = p->next_ptr->padding[1];
+        printf("memory[%llu][%llu], stride = %lld\n", next_i, next_j, stride);
+        */
         p = p->next_ptr;
-        //uint64 next_i = p->padding[0];
-        //uint64 next_j = p->padding[1];
-        //printf("memory[%llu][%llu]\n", next_i, next_j);
     }
     // useless
     if(p == NULL) printf("\n");
@@ -117,14 +121,15 @@ int main()
 
         printf("[Debug] loops = %llu, num_nodes = %llu\n", loops_total, current_num_node);
         printf("[Result] testing latency for size %llu KB... ", current_size / 1024);
+        fflush(stdout);
 
         veronica::set_timer_start(0);
         // stream read
         while (loops_remained--)
         {
-            for (uint64 i = 0; i + shuffle_factor <= current_num_node; i+= shuffle_factor)
+            for (int64 i = 0; i + shuffle_factor <= current_num_node; i+= shuffle_factor)
             {
-                //printf("[Debug] loops = %llu, i = %llu, test size = %llu, node size = %llu, current_num_nodes = %llu, stride %llu\n", loops_remained, i, current_size, sizeof(node), current_num_node, (nodes + i) - nodes);
+                //printf("[Debug] loops = %llu, i = %lld, test size = %llu, node size = %llu, current_num_nodes = %llu, stride %llu\n", loops_remained, i, current_size, sizeof(node), current_num_node, (nodes + i) - nodes);
                 pointer_chasing(nodes[i], shuffle_factor);
             }
         }
