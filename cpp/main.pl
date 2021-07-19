@@ -7,10 +7,10 @@ use File::Copy;
 use lib "$ENV{'VERONICA'}/perl";
 use Veronica::Common;
 
-$TOP_INFO{'TOOLCHAIN_PREFIX'}   = '';
-#$TOP_INFO{'TOOLCHAIN_PREFIX'}   = 'aarch64-none-linux-gnu-';
-#$TOP_INFO{'TOOLCHAIN_PREFIX'}   = 'riscv64-unknown-linux-gnu-';
-our $COMPILER           = 'gcc';
+our $TOOLCHAIN_PREFIX   = '';
+#our $TOOLCHAIN_PREFIX   = 'aarch64-none-linux-gnu-';
+#our $TOOLCHAIN_PREFIX   = 'riscv64-unknown-linux-gnu-';
+our $COMPILER           = $TOOLCHAIN_PREFIX.'gcc';
 our $COMPILER_FLAGS     = '-O3 -g -ggdb';
 our $LINKER_FLAGS       = '-lstdc++ -lm';
 
@@ -156,7 +156,6 @@ sub cpp_compile()
     mkdir $target_dir if !-e $target_dir;
     die "[error-script] unable to create $target_dir" if !-e $target_dir;
 
-    $COMPILER = $TOOLCHAIN_PREFIX.$COMPILER;
     my $arch_type = Veronica::Common::get_target_arch_type($COMPILER);
     my $final_flags = "$COMPILER_FLAGS $LINKER_FLAGS -D$arch_type";
     # TODO: get AVX2 parameter programmatically
